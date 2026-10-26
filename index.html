@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Javidnam Poster Maker</title>
-    <!-- کتابخانه jsPDF برای دانلود فایل PDF باکیفیت چاپ -->
+    <!-- jsPDF library for high quality PDF output -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         body {
@@ -48,6 +48,7 @@
             display: flex;
             gap: 10px;
             margin-top: 15px;
+            flex-wrap: wrap;
         }
         button {
             flex: 1;
@@ -59,6 +60,7 @@
             cursor: pointer;
             font-size: 16px;
             font-weight: bold;
+            min-width: 130px;
         }
         button:hover {
             background: #0056b3;
@@ -69,16 +71,33 @@
         button.pdf-btn:hover {
             background: #218838;
         }
+        button.reset-btn {
+            background: #6c757d;
+        }
+        button.reset-btn:hover {
+            background: #5a6268;
+        }
+        .canvas-container {
+            position: relative;
+            margin-top: 15px;
+        }
         canvas {
             max-width: 100%;
             height: auto;
-            margin-top: 15px;
             border: 1px solid #ddd;
             border-radius: 6px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            cursor: grab;
+        }
+        canvas:active {
+            cursor: grabbing;
+        }
+        .hint {
+            font-size: 13px;
+            color: #666;
+            margin-top: 6px;
         }
 
-        /* ریسپانسیو برای گوشی‌های موبایل */
         @media (max-width: 480px) {
             body {
                 padding: 5px;
@@ -102,7 +121,7 @@
     <h2>Javidnam Poster Maker</h2>
     
     <div class="form-group">
-        <label>Javidnam Portrait Image:</label>
+        <label>Javidnam Portrait Image (Upload or Drag & Drop):</label>
         <input type="file" id="imageInput" accept="image/*">
     </div>
     
@@ -114,10 +133,14 @@
     <div class="btn-group">
         <button onclick="downloadJPG()">Download JPG</button>
         <button class="pdf-btn" onclick="downloadPDF()">Download Print PDF</button>
+        <button class="reset-btn" onclick="resetForm()">Reset</button>
     </div>
 
     <h3>Live Preview</h3>
-    <canvas id="posterCanvas"></canvas>
+    <div class="canvas-container">
+        <canvas id="posterCanvas"></canvas>
+    </div>
+    <div class="hint">You can drag the preview image to adjust the portrait position.</div>
 </div>
 
 <script>
@@ -128,6 +151,11 @@
     posterTemplate.src = 'Template.jpg';
 
     let userImage = null;
+    let imgOffsetX = 0;
+    let imgOffsetY = 0;
+    let isDragging = false;
+    let startX = 0;
+    let startY = 0;
 
     posterTemplate.onload = () => {
         canvas.width = posterTemplate.naturalWidth;
@@ -135,24 +163,76 @@
         drawPoster();
     };
 
-    document.getElementById('imageInput').addEventListener('change', function(e) {
-        const file = e.target.files[0];
-        if (file) {
+    function handleFile(file) {
+        if (file && file.type.startsWith('image/')) {
             const reader = new FileReader();
             reader.onload = function(event) {
                 userImage = new Image();
                 userImage.onload = function() {
+                    imgOffsetX = 0;
+                    imgOffsetY = 0;
                     drawPoster();
-                }
+                };
                 userImage.src = event.target.result;
-            }
+            };
             reader.readAsDataURL(file);
+        }
+    }
+
+    document.getElementById('imageInput').addEventListener('change', (e) => handleFile(e.target.files[0]));
+
+    // Drag and Drop support
+    const container = document.querySelector('.container');
+    container.addEventListener('dragover', (e) => e.preventDefault());
+    container.addEventListener('drop', (e) => {
+        e.preventDefault();
+        if (e.dataTransfer.files.length) {
+            handleFile(e.dataTransfer.files[0]);
         }
     });
 
-    document.getElementById('nameInput').addEventListener('input', function() {
+    document.getElementById('nameInput').addEventListener('input', drawPoster);
+
+    // Mouse and Touch events for Pan adjustment
+    function getCanvasCoordinates(e) {
+        const rect = canvas.getBoundingClientRect();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        const scale = canvas.width / rect.width;
+        return {
+            x: (clientX - rect.left) * scale,
+            y: (clientY - rect.top) * scale
+        };
+    }
+
+    function startDrag(e) {
+        if (!userImage) return;
+        isDragging = true;
+        const pos = getCanvasCoordinates(e);
+        startX = pos.x - imgOffsetX;
+        startY = pos.y - imgOffsetY;
+    }
+
+    function drag(e) {
+        if (!isDragging || !userImage) return;
+        e.preventDefault();
+        const pos = getCanvasCoordinates(e);
+        imgOffsetX = pos.x - startX;
+        imgOffsetY = pos.y - startY;
         drawPoster();
-    });
+    }
+
+    function stopDrag() {
+        isDragging = false;
+    }
+
+    canvas.addEventListener('mousedown', startDrag);
+    canvas.addEventListener('mousemove', drag);
+    window.addEventListener('mouseup', stopDrag);
+
+    canvas.addEventListener('touchstart', startDrag, { passive: false });
+    canvas.addEventListener('touchmove', drag, { passive: false });
+    window.addEventListener('touchend', stopDrag);
 
     function drawPoster() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -187,11 +267,14 @@
                 sY = (userImage.naturalHeight - sHeight) / 2;
             }
 
-            ctx.drawImage(userImage, sX, sY, sWidth, sHeight, boxX, boxY, boxW, boxH);
+            ctx.drawImage(
+                userImage, 
+                sX, sY, sWidth, sHeight, 
+                boxX + imgOffsetX, boxY + imgOffsetY, boxW, boxH
+            );
             ctx.restore();
         }
 
-        // سیستم تنظیم خودکار سایز فونت (Auto-fit) برای پر کردن حداکثری عرض کادر
         const nameText = document.getElementById('nameInput').value.trim();
         if (nameText) {
             let fontSize = 380;
@@ -230,6 +313,15 @@
         const imgData = canvas.toDataURL('image/jpeg', 0.9);
         pdf.addImage(imgData, 'JPEG', 0, 0, canvas.width, canvas.height);
         pdf.save('poster.pdf');
+    }
+
+    function resetForm() {
+        userImage = null;
+        imgOffsetX = 0;
+        imgOffsetY = 0;
+        document.getElementById('imageInput').value = '';
+        document.getElementById('nameInput').value = '';
+        drawPoster();
     }
 </script>
 
