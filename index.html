@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="fa" dir="rtl">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>سازنده آنلاین پوستر</title>
+    <title>Online Poster Maker</title>
     <!-- کتابخانه jsPDF برای دانلود فایل PDF باکیفیت چاپ -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
@@ -23,7 +23,7 @@
         }
         .form-group {
             margin: 15px 0;
-            text-align: right;
+            text-align: left;
         }
         label {
             display: block;
@@ -77,24 +77,24 @@
 <body>
 
 <div class="container">
-    <h2>ساخت پوستر اختصاصی</h2>
+    <h2>Poster Maker</h2>
     
     <div class="form-group">
-        <label>انتخاب عکس جاویدنام:</label>
+        <label>Javidnam Portrait Image:</label>
         <input type="file" id="imageInput" accept="image/*">
     </div>
     
     <div class="form-group">
-        <label>نام و نام خانوادگی جاویدنام:</label>
-        <input type="text" id="nameInput" placeholder="نام و نام خانوادگی">
+        <label>Javidnam Full Name:</label>
+        <input type="text" id="nameInput" placeholder="Full Name">
     </div>
 
     <div class="btn-group">
-        <button onclick="downloadPNG()">دانلود تصویر (PNG)</button>
-        <button class="pdf-btn" onclick="downloadPDF()">دانلود فایل چاپی (PDF)</button>
+        <button onclick="downloadPNG()">Download Image</button>
+        <button class="pdf-btn" onclick="downloadPDF()">Download Print PDF</button>
     </div>
 
-    <h3>پیش‌نمایش زنده</h3>
+    <h3>Live Preview</h3>
     <canvas id="posterCanvas"></canvas>
 </div>
 
@@ -204,7 +204,6 @@
             format: [canvas.width, canvas.height]
         });
         
-        // تبدیل خروجی به JPEG با کیفیت ۹۰٪ برای کاهش چشمگیر حجم فایل PDF
         const imgData = canvas.toDataURL('image/jpeg', 0.9);
         pdf.addImage(imgData, 'JPEG', 0, 0, canvas.width, canvas.height);
         pdf.save('poster.pdf');
