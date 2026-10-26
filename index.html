@@ -88,6 +88,7 @@
             border-radius: 6px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.05);
             cursor: grab;
+            touch-action: none;
         }
         canvas:active {
             cursor: grabbing;
@@ -151,8 +152,8 @@
     posterTemplate.src = 'Template.jpg';
 
     let userImage = null;
-    let imgOffsetX = 0;
-    let imgOffsetY = 0;
+    let panX = 0;
+    let panY = 0;
     let isDragging = false;
     let startX = 0;
     let startY = 0;
@@ -169,8 +170,8 @@
             reader.onload = function(event) {
                 userImage = new Image();
                 userImage.onload = function() {
-                    imgOffsetX = 0;
-                    imgOffsetY = 0;
+                    panX = 0;
+                    panY = 0;
                     drawPoster();
                 };
                 userImage.src = event.target.result;
@@ -181,7 +182,6 @@
 
     document.getElementById('imageInput').addEventListener('change', (e) => handleFile(e.target.files[0]));
 
-    // Drag and Drop support
     const container = document.querySelector('.container');
     container.addEventListener('dragover', (e) => e.preventDefault());
     container.addEventListener('drop', (e) => {
@@ -193,7 +193,6 @@
 
     document.getElementById('nameInput').addEventListener('input', drawPoster);
 
-    // Mouse and Touch events for Pan adjustment
     function getCanvasCoordinates(e) {
         const rect = canvas.getBoundingClientRect();
         const clientX = e.touches ? e.touches[0].clientX : e.clientX;
@@ -209,16 +208,16 @@
         if (!userImage) return;
         isDragging = true;
         const pos = getCanvasCoordinates(e);
-        startX = pos.x - imgOffsetX;
-        startY = pos.y - imgOffsetY;
+        startX = pos.x - panX;
+        startY = pos.y - panY;
     }
 
     function drag(e) {
         if (!isDragging || !userImage) return;
         e.preventDefault();
         const pos = getCanvasCoordinates(e);
-        imgOffsetX = pos.x - startX;
-        imgOffsetY = pos.y - startY;
+        panX = pos.x - startX;
+        panY = pos.y - startY;
         drawPoster();
     }
 
@@ -252,26 +251,43 @@
             ctx.rect(boxX, boxY, boxW, boxH);
             ctx.clip();
 
+            // محاسبه ابعاد تصویر در حالت Cover
             const imgRatio = userImage.naturalWidth / userImage.naturalHeight;
             const boxRatio = boxW / boxH;
-            let sWidth = userImage.naturalWidth;
-            let sHeight = userImage.naturalHeight;
-            let sX = 0;
-            let sY = 0;
 
+            let renderW, renderH;
             if (imgRatio > boxRatio) {
-                sWidth = userImage.naturalHeight * boxRatio;
-                sX = (userImage.naturalWidth - sWidth) / 2;
+                renderH = boxH;
+                renderW = boxH * imgRatio;
             } else {
-                sHeight = userImage.naturalWidth / boxRatio;
-                sY = (userImage.naturalHeight - sHeight) / 2;
+                renderW = boxW;
+                renderH = boxW / imgRatio;
             }
 
-            ctx.drawImage(
-                userImage, 
-                sX, sY, sWidth, sHeight, 
-                boxX + imgOffsetX, boxY + imgOffsetY, boxW, boxH
-            );
+            // مرکز تصویر ابتدایی
+            let drawX = boxX + (boxW - renderW) / 2 + panX;
+            let drawY = boxY + (boxH - renderH) / 2 + panY;
+
+            // محدود کردن جابه‌جایی (Clamping) تا عکس هرگز خارج از کادر نشود
+            if (renderW > boxW) {
+                const minX = boxX + boxW - renderW;
+                const maxX = boxX;
+                if (drawX < minX) drawX = minX;
+                if (drawX > maxX) drawX = maxX;
+            } else {
+                drawX = boxX;
+            }
+
+            if (renderH > boxH) {
+                const minY = boxY + boxH - renderH;
+                const maxY = boxY;
+                if (drawY < minY) drawY = minY;
+                if (drawY > maxY) drawY = maxY;
+            } else {
+                drawY = boxY;
+            }
+
+            ctx.drawImage(userImage, drawX, drawY, renderW, renderH);
             ctx.restore();
         }
 
@@ -317,8 +333,8 @@
 
     function resetForm() {
         userImage = null;
-        imgOffsetX = 0;
-        imgOffsetY = 0;
+        panX = 0;
+        panY = 0;
         document.getElementById('imageInput').value = '';
         document.getElementById('nameInput').value = '';
         drawPoster();
