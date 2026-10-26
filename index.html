@@ -243,7 +243,7 @@
         if (userImage) {
             ctx.save();
             const boxW = 3600;
-            const boxH = 3380;
+            const boxH = 3200; // ارتفاع استاندارد برای ایجاد فضای دو سطری
             const boxX = (canvas.width - boxW) / 2;
             const boxY = 1150;
 
@@ -251,7 +251,6 @@
             ctx.rect(boxX, boxY, boxW, boxH);
             ctx.clip();
 
-            // محاسبه ابعاد تصویر در حالت Cover
             const imgRatio = userImage.naturalWidth / userImage.naturalHeight;
             const boxRatio = boxW / boxH;
 
@@ -264,11 +263,9 @@
                 renderH = boxW / imgRatio;
             }
 
-            // مرکز تصویر ابتدایی
             let drawX = boxX + (boxW - renderW) / 2 + panX;
             let drawY = boxY + (boxH - renderH) / 2 + panY;
 
-            // محدود کردن جابه‌جایی (Clamping) تا عکس هرگز خارج از کادر نشود
             if (renderW > boxW) {
                 const minX = boxX + boxW - renderW;
                 const maxX = boxX;
@@ -291,23 +288,26 @@
             ctx.restore();
         }
 
+        // درج نام به صورت دو سطری با فونت درشت پهن مطابق با طرح اولیه
         const nameText = document.getElementById('nameInput').value.trim();
         if (nameText) {
-            let fontSize = 380;
-            const maxWidth = 3400;
-
-            ctx.textAlign = 'center';
-            
-            do {
-                ctx.font = `bold ${fontSize}px Impact, "Arial Black", sans-serif`;
-                if (ctx.measureText(nameText).width <= maxWidth || fontSize <= 120) {
-                    break;
-                }
-                fontSize -= 5;
-            } while (fontSize > 120);
-
             ctx.fillStyle = '#111111';
-            ctx.fillText(nameText, canvas.width / 2, 4880);
+            ctx.textAlign = 'center';
+
+            const words = nameText.split(' ');
+            if (words.length > 1) {
+                const mid = Math.ceil(words.length / 2);
+                const line1 = words.slice(0, mid).join(' ');
+                const line2 = words.slice(mid).join(' ');
+
+                // تنظیم فونت سنگین و بولد مشابه طرح اولیه
+                ctx.font = '900 320px "Arial Black", Impact, sans-serif';
+                ctx.fillText(line1, canvas.width / 2, 4650);
+                ctx.fillText(line2, canvas.width / 2, 5000);
+            } else {
+                ctx.font = '900 360px "Arial Black", Impact, sans-serif';
+                ctx.fillText(nameText, canvas.width / 2, 4820);
+            }
         }
     }
 
