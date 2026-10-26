@@ -67,7 +67,7 @@
         canvas {
             max-width: 100%;
             height: auto;
-            margin-top: 20px;
+‌            margin-top: 20px;
             border: 1px solid #ddd;
             border-radius: 6px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.05);
@@ -89,7 +89,7 @@
         <input type="text" id="nameInput" placeholder="نام و نام خانوادگی">
     </div>
 
-    <div class="btn-group"> خروجی
+    <div class="btn-group">
         <button onclick="downloadPNG()">دانلود تصویر (PNG)</button>
         <button class="pdf-btn" onclick="downloadPDF()">دانلود فایل چاپی (PDF)</button>
     </div>
@@ -139,7 +139,7 @@
             ctx.drawImage(posterTemplate, 0, 0);
         }
 
-        // مختصات دقیق کادر وسط پوستر بر اساس ابعاد 4220x5964
+        // رسم عکس کاربر با حفظ تناسب (بدون کش آمدن و دفرمه شدن)
         if (userImage) {
             ctx.save();
             const boxW = 3600;
@@ -150,17 +150,45 @@
             ctx.beginPath();
             ctx.rect(boxX, boxY, boxW, boxH);
             ctx.clip();
-            ctx.drawImage(userImage, boxX, boxY, boxW, boxH);
+
+            // محاسبات برای حفظ نسبت ابعاد عکس (Cover)
+            const imgRatio = userImage.naturalWidth / userImage.naturalHeight;
+            const boxRatio = boxW / boxH;
+            let sWidth = userImage.naturalWidth;
+            let sHeight = userImage.naturalHeight;
+            let sX = 0;
+            let sY = 0;
+
+            if (imgRatio > boxRatio) {
+                sWidth = userImage.naturalHeight * boxRatio;
+                sX = (userImage.naturalWidth - sWidth) / 2;
+            } else {
+                sHeight = userImage.naturalWidth / boxRatio;
+                sY = (userImage.naturalHeight - sHeight) / 2;
+            }
+
+            ctx.drawImage(userImage, sX, sY, sWidth, sHeight, boxX, boxY, boxW, boxH);
             ctx.restore();
         }
 
-        // رسم متن نام دقیقاً در فضای خالی زیر عکس و بالای متن قرمز
-        const nameText = document.getElementById('nameInput').value;
+        // رسم متن نام به صورت دو سطری، بسیار بزرگ و خوانا
+        const nameText = document.getElementById('nameInput').value.trim();
         if (nameText) {
-            ctx.font = 'bold 160px Tahoma, sans-serif';
+            ctx.font = 'bold 180px Tahoma, sans-serif';
             ctx.fillStyle = '#111111';
             ctx.textAlign = 'center';
-            ctx.fillText(nameText, canvas.width / 2, 4700);
+
+            const words = nameText.split(' ');
+            if (words.length > 1) {
+                const mid = Math.ceil(words.length / 2);
+                const line1 = words.slice(0, mid).join(' ');
+                const line2 = words.slice(mid).join(' ');
+
+                ctx.fillText(line1, canvas.width / 2, 4550);
+                ctx.fillText(line2, canvas.width / 2, 4750);
+            } else {
+                ctx.fillText(nameText, canvas.width / 2, 4650);
+            }
         }
     }
 
