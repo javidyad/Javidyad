@@ -288,16 +288,16 @@
             ctx.restore();
         }
 
-        // درج هوشمند دو‌سطری با اندازه خودکار حداکثری (Auto-fit Max Size)
+        // تنظیم ایمن و بهینه متن دو‌سطری با حداکثر سایز ممکن بدون ورود به عکس
         const nameText = document.getElementById('nameInput').value.trim();
         if (nameText) {
             ctx.fillStyle = '#111111';
             ctx.textAlign = 'center';
 
-            const maxWidth = 3400; // حداکثر عرض مجاز کادر
+            const maxWidth = 3400;
             const words = nameText.split(' ');
 
-            function getOptimalFontSize(text, startSize = 450) {
+            function getOptimalFontSize(text, startSize = 360) {
                 let size = startSize;
                 do {
                     ctx.font = `900 ${size}px "Arial Black", Impact, sans-serif`;
@@ -314,18 +314,19 @@
                 const line1 = words.slice(0, mid).join(' ');
                 const line2 = words.slice(mid).join(' ');
 
-                // محاسبه اندازه جداگانه یا یکسان برای حداکثر پرکردن فضا
-                const font1 = getOptimalFontSize(line1, 420);
-                const font2 = getOptimalFontSize(line2, 420);
-                const sharedFont = Math.min(font1, font2); // محاسبه سایز هماهنگ
+                const font1 = getOptimalFontSize(line1, 360);
+                const font2 = getOptimalFontSize(line2, 360);
+                const sharedFont = Math.min(font1, font2);
 
                 ctx.font = `900 ${sharedFont}px "Arial Black", Impact, sans-serif`;
-                ctx.fillText(line1, canvas.width / 2, 4630);
-                ctx.fillText(line2, canvas.width / 2, 4630 + (sharedFont * 0.95));
+                
+                // مختصات جدید و امن‌تر برای فاصله گرفتن از عکس و نشستن در مرکز فضای خالی
+                ctx.fillText(line1, canvas.width / 2, 4720);
+                ctx.fillText(line2, canvas.width / 2, 5100);
             } else {
-                const singleFont = getOptimalFontSize(nameText, 450);
+                const singleFont = getOptimalFontSize(nameText, 380);
                 ctx.font = `900 ${singleFont}px "Arial Black", Impact, sans-serif`;
-                ctx.fillText(nameText, canvas.width / 2, 4820);
+                ctx.fillText(nameText, canvas.width / 2, 4920);
             }
         }
     }
