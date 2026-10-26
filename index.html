@@ -169,13 +169,13 @@
             ctx.restore();
         }
 
-        // نمایش نام به صورت تک‌خطی و متناسب در فضای خالی بین عکس و خط قرمز
+        // تنظیم موقعیت متن در مرکز فاصله خالی بین عکس و خط قرمز
         const nameText = document.getElementById('nameInput').value.trim();
         if (nameText) {
             ctx.font = 'bold 270px Impact, "Arial Black", sans-serif';
             ctx.fillStyle = '#111111';
             ctx.textAlign = 'center';
-            ctx.fillText(nameText, canvas.width / 2, 4820);
+            ctx.fillText(nameText, canvas.width / 2, 4880);
         }
     }
 
