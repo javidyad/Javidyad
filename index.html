@@ -243,7 +243,7 @@
         if (userImage) {
             ctx.save();
             const boxW = 3600;
-            const boxH = 3200; // ارتفاع استاندارد برای ایجاد فضای دو سطری
+            const boxH = 3200;
             const boxX = (canvas.width - boxW) / 2;
             const boxY = 1150;
 
@@ -288,24 +288,43 @@
             ctx.restore();
         }
 
-        // درج نام به صورت دو سطری با فونت درشت پهن مطابق با طرح اولیه
+        // درج هوشمند دو‌سطری با اندازه خودکار حداکثری (Auto-fit Max Size)
         const nameText = document.getElementById('nameInput').value.trim();
         if (nameText) {
             ctx.fillStyle = '#111111';
             ctx.textAlign = 'center';
 
+            const maxWidth = 3400; // حداکثر عرض مجاز کادر
             const words = nameText.split(' ');
+
+            function getOptimalFontSize(text, startSize = 450) {
+                let size = startSize;
+                do {
+                    ctx.font = `900 ${size}px "Arial Black", Impact, sans-serif`;
+                    if (ctx.measureText(text).width <= maxWidth || size <= 140) {
+                        break;
+                    }
+                    size -= 5;
+                } while (size > 140);
+                return size;
+            }
+
             if (words.length > 1) {
                 const mid = Math.ceil(words.length / 2);
                 const line1 = words.slice(0, mid).join(' ');
                 const line2 = words.slice(mid).join(' ');
 
-                // تنظیم فونت سنگین و بولد مشابه طرح اولیه
-                ctx.font = '900 320px "Arial Black", Impact, sans-serif';
-                ctx.fillText(line1, canvas.width / 2, 4650);
-                ctx.fillText(line2, canvas.width / 2, 5000);
+                // محاسبه اندازه جداگانه یا یکسان برای حداکثر پرکردن فضا
+                const font1 = getOptimalFontSize(line1, 420);
+                const font2 = getOptimalFontSize(line2, 420);
+                const sharedFont = Math.min(font1, font2); // محاسبه سایز هماهنگ
+
+                ctx.font = `900 ${sharedFont}px "Arial Black", Impact, sans-serif`;
+                ctx.fillText(line1, canvas.width / 2, 4630);
+                ctx.fillText(line2, canvas.width / 2, 4630 + (sharedFont * 0.95));
             } else {
-                ctx.font = '900 360px "Arial Black", Impact, sans-serif';
+                const singleFont = getOptimalFontSize(nameText, 450);
+                ctx.font = `900 ${singleFont}px "Arial Black", Impact, sans-serif`;
                 ctx.fillText(nameText, canvas.width / 2, 4820);
             }
         }
