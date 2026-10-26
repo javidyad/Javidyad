@@ -139,7 +139,7 @@
             ctx.drawImage(posterTemplate, 0, 0);
         }
 
-        // همان اندازه و موقعیت قبلی و ایده‌آل عکس
+        // ابعاد و موقعیت دقیق و ایده‌آل عکس
         if (userImage) {
             ctx.save();
             const boxW = 3600;
@@ -170,10 +170,10 @@
             ctx.restore();
         }
 
-        // متن دو سطری بزرگ، اما ۱۰ درصد کوچک‌تر شده برای نشستن دقیق در فضای خالی بدون تداخل
+        // متن دو سطری با سایز جدید (۱۰ درصد کوچک‌تر شده)
         const nameText = document.getElementById('nameInput').value.trim();
         if (nameText) {
-            ctx.font = 'bold 320px Tahoma, sans-serif';
+            ctx.font = 'bold 288px Tahoma, sans-serif';
             ctx.fillStyle = '#111111';
             ctx.textAlign = 'center';
 
