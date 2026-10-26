@@ -142,7 +142,7 @@
         if (userImage) {
             ctx.save();
             const boxW = 3600;
-            const boxH = 3200;
+            const boxH = 3380; // افزایش ارتفاع عکس برای پر کردن فضا از بالا و پایین
             const boxX = (canvas.width - boxW) / 2;
             const boxY = 1150;
 
@@ -171,7 +171,8 @@
 
         const nameText = document.getElementById('nameInput').value.trim();
         if (nameText) {
-            ctx.font = 'bold 288px Tahoma, sans-serif';
+            // استفاده از فونت بولد و سنگین Impact / Arial Black برای پر کردن عالی فضا
+            ctx.font = 'bold 310px Impact, "Arial Black", sans-serif';
             ctx.fillStyle = '#111111';
             ctx.textAlign = 'center';
 
@@ -181,10 +182,10 @@
                 const line1 = words.slice(0, mid).join(' ');
                 const line2 = words.slice(mid).join(' ');
 
-                ctx.fillText(line1, canvas.width / 2, 4580);
-                ctx.fillText(line2, canvas.width / 2, 4960);
+                ctx.fillText(line1, canvas.width / 2, 4700);
+                ctx.fillText(line2, canvas.width / 2, 5020);
             } else {
-                ctx.fillText(nameText, canvas.width / 2, 4770);
+                ctx.fillText(nameText, canvas.width / 2, 4850);
             }
         }
     }
