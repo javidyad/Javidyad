@@ -169,12 +169,24 @@
             ctx.restore();
         }
 
-        // تنظیم موقعیت متن در مرکز فاصله خالی بین عکس و خط قرمز
+        // سیستم تنظیم خودکار سایز فونت (Auto-fit) برای پر کردن حداکثری عرض کادر
         const nameText = document.getElementById('nameInput').value.trim();
         if (nameText) {
-            ctx.font = 'bold 270px Impact, "Arial Black", sans-serif';
-            ctx.fillStyle = '#111111';
+            let fontSize = 380; // شروع از بزرگ‌ترین سایز ممکن
+            const maxWidth = 3400; // حداکثر عرض مجاز برای متن درون پوستر
+
             ctx.textAlign = 'center';
+            
+            // حلقه بررسی عرض متن و کاهش تدریجی سایز در صورت طولانی بودن نام
+            do {
+                ctx.font = `bold ${fontSize}px Impact, "Arial Black", sans-serif`;
+                if (ctx.measureText(nameText).width <= maxWidth || fontSize <= 120) {
+                    break;
+                }
+                fontSize -= 5;
+            } while (fontSize > 120);
+
+            ctx.fillStyle = '#111111';
             ctx.fillText(nameText, canvas.width / 2, 4880);
         }
     }
