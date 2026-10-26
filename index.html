@@ -67,7 +67,7 @@
         canvas {
             max-width: 100%;
             height: auto;
-‌            margin-top: 20px;
+            margin-top: 20px;
             border: 1px solid #ddd;
             border-radius: 6px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.05);
@@ -139,19 +139,18 @@
             ctx.drawImage(posterTemplate, 0, 0);
         }
 
-        // رسم عکس کاربر با حفظ تناسب (بدون کش آمدن و دفرمه شدن)
+        // انتقال عکس به بالا و افزایش ارتفاع برای کاهش فاصله
         if (userImage) {
             ctx.save();
             const boxW = 3600;
-            const boxH = 2650;
+            const boxH = 3200; // ارتفاع بیشتر برای پر کردن فضا
             const boxX = (canvas.width - boxW) / 2;
-            const boxY = 1650;
+            const boxY = 1150; // جابجایی به سمت بالا نزدیک خط قرمز
 
             ctx.beginPath();
             ctx.rect(boxX, boxY, boxW, boxH);
             ctx.clip();
 
-            // محاسبات برای حفظ نسبت ابعاد عکس (Cover)
             const imgRatio = userImage.naturalWidth / userImage.naturalHeight;
             const boxRatio = boxW / boxH;
             let sWidth = userImage.naturalWidth;
@@ -171,10 +170,10 @@
             ctx.restore();
         }
 
-        // رسم متن نام به صورت دو سطری، بسیار بزرگ و خوانا
+        // متن دو سطری با سایز دو برابر بزرگ‌تر
         const nameText = document.getElementById('nameInput').value.trim();
         if (nameText) {
-            ctx.font = 'bold 180px Tahoma, sans-serif';
+            ctx.font = 'bold 360px Tahoma, sans-serif'; // دو برابر بزرگ‌تر
             ctx.fillStyle = '#111111';
             ctx.textAlign = 'center';
 
@@ -184,10 +183,10 @@
                 const line1 = words.slice(0, mid).join(' ');
                 const line2 = words.slice(mid).join(' ');
 
-                ctx.fillText(line1, canvas.width / 2, 4550);
-                ctx.fillText(line2, canvas.width / 2, 4750);
+                ctx.fillText(line1, canvas.width / 2, 4600);
+                ctx.fillText(line2, canvas.width / 2, 5000);
             } else {
-                ctx.fillText(nameText, canvas.width / 2, 4650);
+                ctx.fillText(nameText, canvas.width / 2, 4800);
             }
         }
     }
