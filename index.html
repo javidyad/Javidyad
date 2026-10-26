@@ -139,13 +139,13 @@
             ctx.drawImage(posterTemplate, 0, 0);
         }
 
-        // تنظیم کادر عکس بدون تداخل با متن
+        // همان اندازه و موقعیت قبلی و ایده‌آل عکس
         if (userImage) {
             ctx.save();
             const boxW = 3600;
-            const boxH = 2900; 
+            const boxH = 3200;
             const boxX = (canvas.width - boxW) / 2;
-            const boxY = 1100;
+            const boxY = 1150;
 
             ctx.beginPath();
             ctx.rect(boxX, boxY, boxW, boxH);
@@ -170,10 +170,10 @@
             ctx.restore();
         }
 
-        // متن دو سطری متناسب با فضای خالی، بدون برخورد با خط قرمز
+        // متن دو سطری بزرگ، اما ۱۰ درصد کوچک‌تر شده برای نشستن دقیق در فضای خالی بدون تداخل
         const nameText = document.getElementById('nameInput').value.trim();
         if (nameText) {
-            ctx.font = 'bold 260px Tahoma, sans-serif';
+            ctx.font = 'bold 320px Tahoma, sans-serif';
             ctx.fillStyle = '#111111';
             ctx.textAlign = 'center';
 
@@ -183,10 +183,10 @@
                 const line1 = words.slice(0, mid).join(' ');
                 const line2 = words.slice(mid).join(' ');
 
-                ctx.fillText(line1, canvas.width / 2, 4350);
-                ctx.fillText(line2, canvas.width / 2, 4680);
+                ctx.fillText(line1, canvas.width / 2, 4580);
+                ctx.fillText(line2, canvas.width / 2, 4960);
             } else {
-                ctx.fillText(nameText, canvas.width / 2, 4500);
+                ctx.fillText(nameText, canvas.width / 2, 4770);
             }
         }
     }
