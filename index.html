@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Javidnam Poster Maker</title>
     <!-- کتابخانه jsPDF برای دانلود فایل PDF باکیفیت چاپ -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -10,16 +11,19 @@
             font-family: Tahoma, sans-serif;
             background: #f4f4f9;
             text-align: center;
-            padding: 20px;
+            padding: 10px;
             margin: 0;
+            box-sizing: border-box;
         }
         .container {
             background: #fff;
             max-width: 600px;
+            width: 100%;
             margin: 0 auto;
-            padding: 20px;
+            padding: 15px;
             border-radius: 12px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            box-sizing: border-box;
         }
         .form-group {
             margin: 15px 0;
@@ -30,6 +34,7 @@
             margin-bottom: 5px;
             font-weight: bold;
             color: #333;
+            font-size: 14px;
         }
         input[type="file"], input[type="text"] {
             width: 100%;
@@ -46,7 +51,7 @@
         }
         button {
             flex: 1;
-            padding: 12px;
+            padding: 14px;
             background: #007bff;
             color: white;
             border: none;
@@ -67,10 +72,27 @@
         canvas {
             max-width: 100%;
             height: auto;
-            margin-top: 20px;
+            margin-top: 15px;
             border: 1px solid #ddd;
             border-radius: 6px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        /* ریسپانسیو برای گوشی‌های موبایل */
+        @media (max-width: 480px) {
+            body {
+                padding: 5px;
+            }
+            .container {
+                padding: 10px;
+                border-radius: 8px;
+            }
+            .btn-group {
+                flex-direction: column;
+            }
+            button {
+                width: 100%;
+            }
         }
     </style>
 </head>
@@ -172,12 +194,11 @@
         // سیستم تنظیم خودکار سایز فونت (Auto-fit) برای پر کردن حداکثری عرض کادر
         const nameText = document.getElementById('nameInput').value.trim();
         if (nameText) {
-            let fontSize = 380; // شروع از بزرگ‌ترین سایز ممکن
-            const maxWidth = 3400; // حداکثر عرض مجاز برای متن درون پوستر
+            let fontSize = 380;
+            const maxWidth = 3400;
 
             ctx.textAlign = 'center';
             
-            // حلقه بررسی عرض متن و کاهش تدریجی سایز در صورت طولانی بودن نام
             do {
                 ctx.font = `bold ${fontSize}px Impact, "Arial Black", sans-serif`;
                 if (ctx.measureText(nameText).width <= maxWidth || fontSize <= 120) {
