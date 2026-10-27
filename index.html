@@ -62,7 +62,17 @@
   label.field { display:block; margin:16px 0 6px; font-weight:700; font-size:14px; }
   input[type=text] { width:100%; padding:12px; border:1px solid var(--line); border-radius:8px; font-size:16px; background:transparent; color:inherit; font-family:inherit; }
   .paper { display:flex; align-items:center; gap:10px; margin-top:14px; }
-  .paper + .pick { margin-top:14px; }
+  .paper + .pick, .paper + .from-list, .paper + .chosen { margin-top:14px; }
+  .from-list { display:flex; align-items:center; gap:12px; padding:14px 16px; border:2px solid var(--primary); border-radius:10px; background:var(--primary); color:var(--on-primary); text-decoration:none; }
+  .from-list .fl-text { display:flex; flex-direction:column; gap:2px; flex:1; }
+  .from-list .fl-main { font-weight:700; font-size:17px; }
+  .from-list .fl-sub { font-size:13px; opacity:.85; }
+  .from-list .fl-arrow { font-size:22px; font-weight:700; }
+  body.fa .from-list .fl-arrow { transform:scaleX(-1); }
+  .or { display:flex; align-items:center; gap:10px; margin:12px 0; font-size:13px; color:var(--muted); }
+  .or::before, .or::after { content:""; flex:1; border-top:1px solid var(--line); }
+  .chosen { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px; margin-bottom:12px; padding:10px 12px; border:2px solid var(--gold); border-radius:10px; font-size:15px; }
+  .chosen a { color:var(--primary); font-weight:700; font-size:14px; }
   .paper label { font-weight:700; font-size:14px; }
   select { padding:8px 12px; border:1px solid var(--line); border-radius:8px; font:inherit; font-size:16px; background:transparent; color:inherit; }
   select option { color:#161616; }
@@ -114,6 +124,12 @@
     <select id="posterLang"><option value="en">English</option><option value="de">Deutsch</option></select>
   </div>
 
+  <a class="from-list" id="fromList" href="javidnam.html" hidden>
+    <span class="fl-text"><span class="fl-main" data-i18n="fromListMain"></span><span class="fl-sub" data-i18n="fromListSub"></span></span>
+    <span class="fl-arrow" aria-hidden="true">→</span>
+  </a>
+  <div class="or" id="orLine" data-i18n="or" hidden></div>
+  <div class="chosen" id="chosen" hidden><span id="chosenText"></span><a id="chosenChange" href="javidnam.html" data-i18n="chosenChange"></a></div>
   <label class="pick" id="pick">
     <input type="file" id="imageInput" class="sr" accept="image/*">
     <span class="pick-main" id="pickMain" data-i18n="pickMain"></span>
@@ -193,6 +209,9 @@ const STR = {
     jpgFail: 'JPG export failed: ',
     pdfLib: 'The PDF library did not load. Check your internet connection.',
     pdfFail: 'PDF export failed: ',
+    fromListMain: 'Choose a Javidnam from the list', fromListSub: 'Their photo and name are filled in for you',
+    or: 'or use your own photo', chosen: 'From the list:', chosenChange: 'Choose someone else',
+    personFail: 'This person’s photo could not be loaded. Check your connection, or choose them again from the list.',
     sourceNote: 'The code of this site is public, so anyone can check that photos never leave the device.',
     sourceLink: 'View the code on GitHub'
   },
@@ -219,6 +238,9 @@ const STR = {
     jpgFail: 'خطا در ساخت JPG: ',
     pdfLib: 'کتابخانه‌ی PDF بارگذاری نشد. اتصال اینترنت را بررسی کنید.',
     pdfFail: 'خطا در ساخت PDF: ',
+    fromListMain: 'انتخاب از فهرست جاویدنامان', fromListSub: 'عکس و نام به‌طور خودکار پر می‌شوند',
+    or: 'یا عکس خودتان را بگذارید', chosen: 'از فهرست:', chosenChange: 'انتخاب نفر دیگر',
+    personFail: 'عکس این جاویدنام بارگذاری نشد. اتصال اینترنت را بررسی کنید یا دوباره از فهرست انتخابش کنید.',
     sourceNote: 'کد این سایت عمومی است تا هر کسی بتواند بررسی کند که عکس‌ها از دستگاه خارج نمی‌شوند.',
     sourceLink: 'دیدن کد در گیت‌هاب'
   }
@@ -245,6 +267,8 @@ function applyLang(l) {
   document.querySelectorAll('[data-i18n-ph]').forEach(el => { el.placeholder = t(el.dataset.i18nPh); });
   document.querySelectorAll('[data-i18n-aria]').forEach(el => { el.setAttribute('aria-label', t(el.dataset.i18nAria)); });
   $('langBtn').textContent = t('otherLang');
+  $('fromList').href = $('chosenChange').href = `javidnam.html?lang=${l}`;
+  renderChosen();
   renderError();
 }
 function chooseLang(l) {
@@ -261,6 +285,7 @@ document.querySelectorAll('[data-lang]').forEach(b => {
   b.addEventListener('click', () => chooseLang(b.dataset.lang));
 });
 $('langBtn').addEventListener('click', () => applyLang(lang === 'fa' ? 'en' : 'fa'));
+const params = new URLSearchParams(location.search);
 if (/FBAN|FBAV|Instagram|Line\/|MicroMessenger|Snapchat|Twitter|; wv\)/i.test(navigator.userAgent)) $('inApp').hidden = false;
 
 /* ---------- Settings (coordinates are on the full-size template canvas) ---------- */
@@ -348,22 +373,58 @@ function setPicked(has) {
   $('pick').classList.toggle('has', has);
   const m = $('pickMain'); m.dataset.i18n = has ? 'pickChange' : 'pickMain'; m.textContent = t(m.dataset.i18n);
 }
-function handleFile(file) {
-  if (!file || !file.type.startsWith('image/')) return;
-  if (imageURL) URL.revokeObjectURL(imageURL);
-  imageURL = URL.createObjectURL(file);
+let imageRequest = 0;
+// own = picked by the user; list photos skip the low-resolution warning, since the user cannot swap them for a bigger file
+function setImage(src, own) {
+  const req = ++imageRequest;
   const img = new Image();
   img.onload = () => {
+    if (req !== imageRequest) return;          // a newer photo was chosen while this one was loading
     userImage = img; userPreview = makeUserPreview(img);
     zoom = 1; zoomInput.value = 1; updateZoomLabel();
     panX = 0; panY = Math.max(0, (imageSize().h - CONFIG.photoBox.h) * (0.5 - CONFIG.focusY));
-    $('lowRes').hidden = img.naturalWidth >= CONFIG.photoBox.w * CONFIG.lowResRatio;
+    $('lowRes').hidden = !own || img.naturalWidth >= CONFIG.photoBox.w * CONFIG.lowResRatio;
     $('done').hidden = true; showError('');
-    setPicked(true); redraw();
+    setPicked(own); redraw();
   };
-  img.onerror = () => showError('imgFail');
-  img.src = imageURL;
+  img.onerror = () => { if (req === imageRequest) showError(own ? 'imgFail' : 'personFail'); };
+  img.src = src;
 }
+function handleFile(file) {
+  if (!file || !file.type.startsWith('image/')) return;
+  setChosen(null);
+  if (imageURL) URL.revokeObjectURL(imageURL);
+  imageURL = URL.createObjectURL(file);
+  setImage(imageURL, true);
+}
+
+/* ---------- Javidnam list (javidnam.html, data in javidnam/people.json) ---------- */
+let hasList = false, chosen = null;
+function renderChosen() {
+  $('chosen').hidden = !chosen;
+  $('fromList').hidden = $('orLine').hidden = !hasList || !!chosen;
+  if (chosen) $('chosenText').textContent = `${t('chosen')} ${lang === 'fa' ? chosen.name_fa : chosen.name} (${lang === 'fa' ? chosen.city_fa : chosen.city})`;
+}
+function setChosen(p) {
+  chosen = p; renderChosen();
+  if (!p && params.has('p')) {                 // forget the person in the address, so a reload starts clean
+    params.delete('p');
+    const q = params.toString();
+    history.replaceState(null, '', location.pathname + (q ? '?' + q : ''));
+  }
+}
+fetch('javidnam/people.json', { cache: 'no-cache' })
+  .then(r => (r.ok ? r.json() : []))
+  .then(list => {
+    hasList = list.length > 0;
+    const p = list.find(x => x.id === params.get('p'));
+    if (p) {
+      setChosen(p);
+      nameInput.value = p.name;
+      setImage(`javidnam/photos/${encodeURIComponent(p.id)}.jpg`, false);
+    } else renderChosen();
+  })
+  .catch(() => {});
 $('imageInput').addEventListener('change', e => handleFile(e.target.files[0]));
 
 const container = $('container');
@@ -651,11 +712,15 @@ function resetAll() {
   imageURL = userImage = userPreview = null;
   zoom = 1; panX = panY = 0; zoomInput.value = 1; updateZoomLabel();
   $('imageInput').value = ''; nameInput.value = '';
+  imageRequest++; setChosen(null);
   $('lowRes').hidden = true; $('done').hidden = true; showError('');
   setPicked(false); redraw();
 }
 $('resetBtn').addEventListener('click', resetAll);
 $('againBtn').addEventListener('click', () => { resetAll(); window.scrollTo({ top: 0, behavior: 'smooth' }); });
+
+// links from the list page carry ?lang=, so those visitors go straight to the form
+if (params.get('lang') === 'en' || params.get('lang') === 'fa') chooseLang(params.get('lang'));
 </script>
 </body>
 </html>
