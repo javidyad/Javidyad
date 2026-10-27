@@ -244,7 +244,7 @@ if (/FBAN|FBAV|Instagram|Line\/|MicroMessenger|Snapchat|Twitter|; wv\)/i.test(na
 /* ---------- Settings (coordinates are on the full-size template canvas) ---------- */
 const CONFIG = {
   templateSrc: 'Template.jpg',
-  photoBox: { w: 3600, h: 3200, y: 1150 },      // photo box; x is centered automatically
+  photoBox: { w: 3866, h: 3200, y: 1150, dx: 12 }, // photo box, matched to the width of the red lines above it; dx = small horizontal shift
   nameZone: { top: 4350, bottom: 5075 },        // empty zone between the photo and the red line
   nameMaxWidth: 3400, nameMaxSize: 340, nameMinSize: 140, nameColor: '#111111',
   latinFont: '"Archivo Black", "Arial Black", Impact, sans-serif',
@@ -475,7 +475,7 @@ function render(c, scale, tplSrc, imgSrc) {
   c.drawImage(tplSrc || template, 0, 0, W, H);
 
   if (userImage) {
-    const { w: bw, h: bh, y: by } = CONFIG.photoBox, bx = (W - bw) / 2;
+    const { w: bw, h: bh, y: by } = CONFIG.photoBox, bx = (W - bw) / 2 + (CONFIG.photoBox.dx || 0);
     const s = imageSize();
     c.save();
     c.beginPath(); c.rect(bx, by, bw, bh); c.clip();
