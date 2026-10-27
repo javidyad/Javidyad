@@ -6,7 +6,7 @@
 <title>Javidnam Poster Maker</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Vazirmatn:wght@900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Vazirmatn:wght@400;700;900&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
   :root { --bg:#f4f4f9; --card:#fff; --text:#222; --muted:#666; --line:#ccc; --blue:#0b6bdc; --green:#1c8a3a; --grey:#5b636b; }
@@ -34,41 +34,120 @@
   .note { font-size:13px; color:var(--muted); margin-top:6px; }
   .warn { margin-top:8px; padding:8px 10px; border-radius:6px; background:#fff3cd; color:#5c4400; font-size:13px; }
   .error { margin-top:8px; padding:8px 10px; border-radius:6px; background:#fde2e2; color:#7a1212; font-size:13px; }
+  body.fa { font-family:Vazirmatn, Tahoma, sans-serif; }
+  .top { text-align:end; }
+  button.langbtn { flex:none; min-width:0; width:auto; padding:6px 14px; font-size:14px; background:var(--grey); }
+  .lang-q { text-align:center; line-height:1.9; margin:6px 0 4px; color:var(--muted); }
+  .zoom-row { direction:ltr; }
   [hidden] { display:none !important; }
-  @media (max-width:480px) { button { width:100%; } }
+  @media (max-width:480px) { .btns button { width:100%; } }
 </style>
 </head>
 <body>
-<div class="container" id="container">
+<div class="container" id="langScreen">
   <h2>Javidnam Poster Maker</h2>
+  <p class="lang-q">Choose your language<br>زبان خود را انتخاب کنید</p>
+  <div class="btns">
+    <button data-lang="en" dir="ltr">English</button>
+    <button data-lang="fa">فارسی</button>
+  </div>
+</div>
 
-  <label for="imageInput">Portrait image (choose a file or drag &amp; drop anywhere on the page)</label>
+<div class="container" id="container" hidden>
+  <div class="top"><button id="langBtn" class="langbtn" type="button"></button></div>
+  <h2 data-i18n="title"></h2>
+
+  <label for="imageInput" data-i18n="photoLabel"></label>
   <input type="file" id="imageInput" accept="image/*">
-  <div class="warn" id="lowRes" hidden>This image has a low resolution and may look blurry in a large print. Use a larger version if you have one.</div>
+  <div class="warn" id="lowRes" data-i18n="lowRes" hidden></div>
 
-  <label for="nameInput">Full name</label>
-  <input type="text" id="nameInput" placeholder="Full Name" dir="auto">
+  <label for="nameInput" data-i18n="nameLabel"></label>
+  <input type="text" id="nameInput" dir="auto" data-i18n-ph="namePh">
 
-  <label for="zoomInput">Photo zoom</label>
+  <label for="zoomInput" data-i18n="zoomLabel"></label>
   <div class="zoom-row">
     <input type="range" id="zoomInput" min="1" max="3" step="0.01" value="1" disabled>
     <span id="zoomLabel">100%</span>
   </div>
 
   <div class="btns">
-    <button id="jpgBtn" disabled>Download JPG</button>
-    <button id="pdfBtn" class="pdf" disabled>Download print PDF</button>
-    <button id="resetBtn" class="reset">Reset</button>
+    <button id="jpgBtn" data-i18n="jpg" disabled></button>
+    <button id="pdfBtn" class="pdf" data-i18n="pdf" disabled></button>
+    <button id="resetBtn" class="reset" data-i18n="reset"></button>
   </div>
   <div class="error" id="errorBox" hidden></div>
 
   <div class="stage">
-    <canvas id="posterCanvas" aria-label="Poster preview"></canvas>
-    <div class="note">Drag the photo in the preview to reposition it. Use the slider or mouse wheel to zoom.</div>
+    <canvas id="posterCanvas" data-i18n-aria="previewAria"></canvas>
+    <div class="note" data-i18n="hint"></div>
   </div>
 </div>
 
 <script>
+/* ---------- Language ---------- */
+const STR = {
+  en: {
+    title: 'Javidnam Poster Maker',
+    photoLabel: 'Portrait image (choose a file or drag & drop anywhere on the page)',
+    lowRes: 'This image has a low resolution and may look blurry in a large print. Use a larger version if you have one.',
+    nameLabel: 'Enter the full name in English letters', namePh: 'Full Name', zoomLabel: 'Photo zoom',
+    jpg: 'Download JPG', pdf: 'Download print PDF', reset: 'Reset',
+    hint: 'Drag the photo in the preview to reposition it. Use the slider or mouse wheel to zoom.',
+    previewAria: 'Poster preview', otherLang: 'فارسی',
+    tplFail: 'Template.jpg could not be loaded. Make sure it is in the same folder as this HTML file and that the page is opened from a server or host, not via file://.',
+    imgFail: 'This file could not be read as an image.',
+    blobFail: 'Could not create the file. Please try again.',
+    jpgFail: 'JPG export failed: ',
+    pdfLib: 'The PDF library did not load. Check your internet connection.',
+    pdfFail: 'PDF export failed: '
+  },
+  fa: {
+    title: 'پوستر‌ساز جاویدنام',
+    photoLabel: 'عکس پرتره (انتخاب فایل یا کشیدن و رها کردن روی صفحه)',
+    lowRes: 'رزولوشن این عکس پایین است و در چاپ بزرگ کدر دیده می‌شود. اگر نسخه‌ی بزرگ‌تری دارید از آن استفاده کنید.',
+    nameLabel: 'نام کامل را با حروف انگلیسی وارد کنید', namePh: 'Full Name', zoomLabel: 'زوم عکس',
+    jpg: 'دانلود JPG', pdf: 'دانلود PDF چاپی', reset: 'پاک کردن',
+    hint: 'عکس را روی پیش‌نمایش بکشید تا جابه‌جا شود. با اسلایدر یا چرخ ماوس هم می‌توانید زوم کنید.',
+    previewAria: 'پیش‌نمایش پوستر', otherLang: 'English',
+    tplFail: 'فایل Template.jpg بارگذاری نشد. مطمئن شوید کنار همین فایل HTML است و صفحه را از روی سرور یا هاست باز کرده‌اید، نه با file://.',
+    imgFail: 'این فایل به‌عنوان عکس خوانده نشد.',
+    blobFail: 'ساخت فایل ناموفق بود. دوباره امتحان کنید.',
+    jpgFail: 'خطا در ساخت JPG: ',
+    pdfLib: 'کتابخانه‌ی PDF بارگذاری نشد. اتصال اینترنت را بررسی کنید.',
+    pdfFail: 'خطا در ساخت PDF: '
+  }
+};
+let lang = 'en';
+let lastError = null;
+const t = k => STR[lang][k];
+
+function renderError() {
+  const b = document.getElementById('errorBox');
+  if (lastError) { b.textContent = t(lastError.key) + lastError.extra; b.hidden = false; }
+  else b.hidden = true;
+}
+function showError(key, extra = '') { lastError = key ? { key, extra } : null; renderError(); }
+
+function applyLang(l) {
+  lang = l;
+  const d = document.documentElement;
+  d.lang = l; d.dir = l === 'fa' ? 'rtl' : 'ltr';
+  document.body.classList.toggle('fa', l === 'fa');
+  document.title = t('title');
+  document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); });
+  document.querySelectorAll('[data-i18n-ph]').forEach(el => { el.placeholder = t(el.dataset.i18nPh); });
+  document.querySelectorAll('[data-i18n-aria]').forEach(el => { el.setAttribute('aria-label', t(el.dataset.i18nAria)); });
+  document.getElementById('langBtn').textContent = t('otherLang');
+  renderError();
+}
+function chooseLang(l) {
+  applyLang(l);
+  document.getElementById('langScreen').hidden = true;
+  document.getElementById('container').hidden = false;
+}
+document.querySelectorAll('[data-lang]').forEach(b => b.addEventListener('click', () => chooseLang(b.dataset.lang)));
+document.getElementById('langBtn').addEventListener('click', () => applyLang(lang === 'fa' ? 'en' : 'fa'));
+
 /* ---------- Settings (coordinates are on the full-size template canvas) ---------- */
 const CONFIG = {
   templateSrc: 'Template.jpg',
@@ -105,7 +184,7 @@ template.onload = async () => {
   $('jpgBtn').disabled = $('pdfBtn').disabled = false;
   redraw();
 };
-template.onerror = () => showError('Template.jpg could not be loaded. Make sure it is in the same folder as this HTML file and that the page is opened from a server or host, not via file://.');
+template.onerror = () => showError('tplFail');
 template.src = CONFIG.templateSrc;
 
 async function loadFonts() {
@@ -117,7 +196,6 @@ async function loadFonts() {
   } catch (e) { /* fall back to system fonts */ }
 }
 
-function showError(msg) { const b = $('errorBox'); b.textContent = msg; b.hidden = !msg; }
 
 /* ---------- User photo ---------- */
 function handleFile(file) {
@@ -131,7 +209,7 @@ function handleFile(file) {
     $('lowRes').hidden = img.naturalWidth >= CONFIG.photoBox.w * CONFIG.lowResRatio;
     redraw();
   };
-  img.onerror = () => showError('This file could not be read as an image.');
+  img.onerror = () => showError('imgFail');
   img.src = imageURL;
 }
 $('imageInput').addEventListener('change', e => handleFile(e.target.files[0]));
@@ -282,19 +360,19 @@ $('jpgBtn').addEventListener('click', () => {
   showError('');
   try {
     renderFull().toBlob(b => {
-      if (!b) return showError('Could not create the file. Please try again.');
+      if (!b) return showError('blobFail');
       const a = document.createElement('a');
       a.href = URL.createObjectURL(b);
       a.download = fileBase() + '.jpg';
       a.click();
       setTimeout(() => URL.revokeObjectURL(a.href), 2000);
     }, 'image/jpeg', 0.95);
-  } catch (e) { showError('JPG export failed: ' + e.message); }
+  } catch (e) { showError('jpgFail', e.message); }
 });
 
 $('pdfBtn').addEventListener('click', () => {
   showError('');
-  if (!window.jspdf) return showError('The PDF library did not load. Check your internet connection.');
+  if (!window.jspdf) return showError('pdfLib');
   try {
     const off = renderFull();
     const pdf = new window.jspdf.jsPDF({ unit: 'mm', format: 'a3', orientation: 'portrait' });
@@ -303,7 +381,7 @@ $('pdfBtn').addEventListener('click', () => {
     if (h > ph) { h = ph; w = ph * off.width / off.height; }
     pdf.addImage(off.toDataURL('image/jpeg', 0.95), 'JPEG', (pw - w) / 2, (ph - h) / 2, w, h, undefined, 'FAST');
     pdf.save(fileBase() + '.pdf');
-  } catch (e) { showError('PDF export failed: ' + e.message); }
+  } catch (e) { showError('pdfFail', e.message); }
 });
 
 $('resetBtn').addEventListener('click', () => {
