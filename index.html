@@ -65,8 +65,11 @@
   .privacy, .note { font-size:13px; color:var(--muted); margin-top:6px; line-height:1.7; }
 
   .stage { margin-top:14px; }
-  canvas { display:block; width:100%; height:auto; border:1px solid var(--line); border-radius:6px; background:#fff; touch-action:none; cursor:grab; }
+  canvas { display:block; width:100%; max-width:100%; margin:0 auto; height:auto; border:1px solid var(--line); border-radius:6px; background:#fff; touch-action:none; cursor:grab; transition:max-width .25s; }
   canvas.dragging { cursor:grabbing; }
+  canvas.idle { cursor:default; }
+  .stage.sample canvas { max-width:62%; }
+  .stage.sample .note { text-align:center; }
   .zoom-row { direction:ltr; display:flex; align-items:center; gap:10px; margin-top:10px; }
   .zoom-row input { flex:1; accent-color:var(--gold); }
 
@@ -108,13 +111,14 @@
   <div class="privacy" data-i18n="privacy"></div>
   <div class="warn" id="lowRes" data-i18n="lowRes" hidden></div>
 
-  <div class="stage" id="stage" hidden>
+  <div class="stage" id="stage">
     <canvas id="posterCanvas" tabindex="0" data-i18n-aria="previewAria"></canvas>
     <div class="zoom-row" id="zoomRow" hidden>
       <input type="range" id="zoomInput" min="1" max="3" step="0.01" value="1" data-i18n-aria="zoomLabel">
       <span id="zoomLabel">100%</span>
     </div>
-    <div class="note" data-i18n="hint"></div>
+    <div class="note" id="hintNote" data-i18n="hint" hidden></div>
+    <div class="note" id="emptyNote" data-i18n="previewEmpty"></div>
   </div>
 
   <label class="field" for="nameInput" data-i18n="nameLabel"></label>
@@ -163,6 +167,7 @@ const STR = {
     zoomLabel: 'Photo zoom',
     hint: 'Drag the photo to reposition it. Pinch with two fingers, or use the slider or mouse wheel, to zoom.',
     previewAria: 'Poster preview',
+    previewEmpty: 'This is how your finished poster will look. Choose a photo and type a name to fill it in.',
     paperLabel: 'PDF paper size',
     save: 'Save to gallery', jpg: 'Download JPG', pdf: 'Download print PDF', reset: 'Reset',
     saveTip: 'In the menu that opens, choose “Save Image” (iPhone) or Photos / Gallery (Android).',
@@ -186,6 +191,7 @@ const STR = {
     zoomLabel: 'زوم عکس',
     hint: 'عکس را بکشید تا جابه‌جا شود. با دو انگشت (پینچ)، اسلایدر یا چرخ ماوس می‌توانید زوم کنید.',
     previewAria: 'پیش‌نمایش پوستر',
+    previewEmpty: 'پوستر نهایی شما این شکلی می‌شود. عکس را انتخاب کنید و اسم را بنویسید تا جایگزین شوند.',
     paperLabel: 'اندازه‌ی کاغذ PDF',
     save: 'ذخیره در گالری', jpg: 'دانلود JPG', pdf: 'دانلود PDF چاپی', reset: 'پاک کردن',
     saveTip: 'در منویی که باز می‌شود، «Save Image» (آیفون) یا Photos / Gallery (اندروید) را انتخاب کنید.',
@@ -421,7 +427,10 @@ let raf = 0;
 // the preview and the export buttons appear only once there is a photo or a name
 function updateState() {
   const has = !!userImage || nameInput.value.trim() !== '';
-  $('stage').hidden = !has;
+  $('stage').classList.toggle('sample', !has);   // small example until there is a photo or a name
+  canvas.classList.toggle('idle', !userImage);
+  $('hintNote').hidden = !userImage;
+  $('emptyNote').hidden = !!userImage;
   $('zoomRow').hidden = !userImage;
   ['saveBtn', 'jpgBtn', 'pdfBtn'].forEach(id => { $(id).disabled = !(templateReady && has); });
 }
@@ -429,7 +438,7 @@ function redraw() {
   updateState();
   if (!templateReady) return;
   cancelAnimationFrame(raf);
-  raf = requestAnimationFrame(() => render(ctx, previewScale, tplPreview, userPreview));
+  raf = requestAnimationFrame(() => render(ctx, previewScale, tplPreview, userPreview, true));
 }
 
 // choose the line break that makes both lines closest in width
@@ -442,12 +451,14 @@ function splitName(c, words) {
   return [words.slice(0, best).join(' '), words.slice(best).join(' ')];
 }
 
-function drawName(c, W) {
-  const text = nameInput.value.trim().replace(/\s+/g, ' ');
+function drawName(c, W, allowPlaceholder) {
+  let text = nameInput.value.trim().replace(/\s+/g, ' ');
+  const isPh = !text && allowPlaceholder;
+  if (isPh) text = 'Firstname Lastname';
   if (!text) return;
   const fontAt = sz => `900 ${sz}px ${CONFIG.latinFont}`;
   const words = text.split(' ');
-  c.fillStyle = CONFIG.nameColor;
+  c.fillStyle = isPh ? '#d2ccbd' : CONFIG.nameColor;
   c.textAlign = 'center'; c.textBaseline = 'alphabetic'; c.direction = 'ltr';
 
   c.font = fontAt(CONFIG.nameMaxSize);
@@ -467,7 +478,23 @@ function drawName(c, W) {
   lines.forEach(l => { c.fillText(l, W / 2, y); y += capH + gap; });
 }
 
-function render(c, scale, tplSrc, imgSrc) {
+// a ghosted frame and sample name, shown only in the preview (never exported) until the user adds their own
+function drawPhotoPlaceholder(c, W) {
+  const { w: bw, h: bh, y: by } = CONFIG.photoBox, bx = (W - bw) / 2 + (CONFIG.photoBox.dx || 0), cx = bx + bw / 2;
+  c.save();
+  c.beginPath(); c.rect(bx, by, bw, bh); c.clip();
+  c.fillStyle = '#ece8dd'; c.fillRect(bx, by, bw, bh);
+  c.fillStyle = '#d3cdbd';
+  c.beginPath(); c.arc(cx, by + bh * 0.4, bh * 0.17, 0, Math.PI * 2); c.fill();
+  c.beginPath(); c.ellipse(cx, by + bh * 1.02, bw * 0.27, bh * 0.4, 0, 0, Math.PI * 2); c.fill();
+  c.restore();
+  c.save();
+  c.strokeStyle = '#bdb6a3'; c.lineWidth = 14; c.setLineDash([60, 40]);
+  c.strokeRect(bx + 20, by + 20, bw - 40, bh - 40);
+  c.restore();
+}
+
+function render(c, scale, tplSrc, imgSrc, ph) {
   const W = template.naturalWidth, H = template.naturalHeight;
   c.setTransform(1, 0, 0, 1, 0, 0);
   c.clearRect(0, 0, c.canvas.width, c.canvas.height);
@@ -482,8 +509,8 @@ function render(c, scale, tplSrc, imgSrc) {
     c.imageSmoothingQuality = 'high';
     c.drawImage(imgSrc || userImage, bx + (bw - s.w) / 2 + panX, by + (bh - s.h) / 2 + panY, s.w, s.h);
     c.restore();
-  }
-  drawName(c, W);
+  } else if (ph) drawPhotoPlaceholder(c, W);
+  drawName(c, W, ph);
 }
 
 /* ---------- Export ---------- */
