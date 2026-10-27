@@ -15,6 +15,7 @@ The owner speaks Persian. Reply to him in Persian unless he writes in another la
 | `fonts/` (optional) | Self-hosted fonts: `ArchivoBlack-Regular.woff2/.ttf`, `Vazirmatn-Regular/Bold.woff2/.ttf`. The page falls back to system fonts if missing. |
 | `lib/jspdf.umd.min.js` (optional) | jsPDF 2.5.1. Falls back to cdnjs if missing. |
 | `tools/make_template_de.py` | Rebuilds `Template-de.jpg` from `Template.jpg` (see its docstring). |
+| `LICENSE` | All rights reserved. The repo is public so people can read the code, not reuse it. |
 
 Hosted as static files on GitHub Pages. Everything runs in the browser.
 
@@ -22,6 +23,7 @@ Hosted as static files on GitHub Pages. Everything runs in the browser.
 
 - **No red in the UI.** The owner's community is monarchist and reads red as a leftist colour. The palette is navy `#1b2a4a` and gold `#b98a1f` (dark mode: gold `#d9ae45` on navy `#1c2030`). Red inside the poster templates themselves is part of the existing design and stays.
 - **Privacy is a promise shown on the page.** Photos never leave the device. No uploads, no analytics, no trackers, no third-party scripts beyond fonts and jsPDF (which should be self-hosted). Some users may be in or connected to Iran.
+- **Public code, not open source.** The repo is public and the page footer links to it (`sourceNote` / `sourceLink`) so people can check the privacy promise. Do not call it "open source" and do not add an open-source licence: the owner does not want others to copy or republish it.
 - **Names are English letters only** (`A-Z a-z space . ' ’ -`), max 40 characters. The name is drawn in Archivo Black.
 - **Two separate language settings:**
   - UI language: English or Persian (Persian is RTL, Vazirmatn). Chosen on the first screen, switchable with the header button. All strings live in `STR.en` / `STR.fa`; every key must exist in both.
