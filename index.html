@@ -59,6 +59,7 @@
   label.field { display:block; margin:16px 0 6px; font-weight:700; font-size:14px; }
   input[type=text] { width:100%; padding:12px; border:1px solid var(--line); border-radius:8px; font-size:16px; background:transparent; color:inherit; font-family:inherit; }
   .paper { display:flex; align-items:center; gap:10px; margin-top:14px; }
+  .paper + .pick { margin-top:14px; }
   .paper label { font-weight:700; font-size:14px; }
   select { padding:8px 12px; border:1px solid var(--line); border-radius:8px; font:inherit; font-size:16px; background:transparent; color:inherit; }
   select option { color:#161616; }
@@ -102,6 +103,11 @@
   <div class="top"><img class="mini" src="Lion_and_Sun.png" alt="" onerror="this.hidden=true"><button id="langBtn" class="langbtn alt" type="button"></button></div>
   <h2 data-i18n="title"></h2>
   <div class="warn" id="inApp" data-i18n="inApp" hidden></div>
+
+  <div class="paper">
+    <label for="posterLang" data-i18n="posterLangLabel"></label>
+    <select id="posterLang"><option value="en">English</option><option value="de">Deutsch</option></select>
+  </div>
 
   <label class="pick" id="pick">
     <input type="file" id="imageInput" class="sr" accept="image/*">
@@ -168,7 +174,7 @@ const STR = {
     hint: 'Drag the photo to reposition it. Pinch with two fingers, or use the slider or mouse wheel, to zoom.',
     previewAria: 'Poster preview',
     previewEmpty: 'This is how your finished poster will look. Choose a photo and type a name to fill it in.',
-    paperLabel: 'PDF paper size',
+    paperLabel: 'PDF paper size', posterLangLabel: 'Poster language',
     save: 'Save to gallery', jpg: 'Download JPG', pdf: 'Download print PDF', reset: 'Reset',
     saveTip: 'In the menu that opens, choose “Save Image” (iPhone) or Photos / Gallery (Android).',
     preparing: 'Preparing…', done: 'Your poster is ready.', again: 'Make another poster',
@@ -176,7 +182,7 @@ const STR = {
     dlFile: 'Download file', close: 'Close',
     inApp: 'You are in an in-app browser. If saving does not work, open this page in Safari or Chrome.',
     otherLang: 'فارسی', nameLatin: 'Only English letters are allowed in the name.',
-    tplFail: 'Template.jpg could not be loaded. Make sure it is in the same folder as this HTML file and that the page is opened from a server or host, not via file://.',
+    tplFail: 'The poster template (Template.jpg or Template-de.jpg) could not be loaded. Make sure both are in the same folder as this HTML file and that the page is opened from a server or host, not via file://.',
     imgFail: 'This file could not be read as an image.',
     jpgFail: 'JPG export failed: ',
     pdfLib: 'The PDF library did not load. Check your internet connection.',
@@ -192,7 +198,7 @@ const STR = {
     hint: 'عکس را بکشید تا جابه‌جا شود. با دو انگشت (پینچ)، اسلایدر یا چرخ ماوس می‌توانید زوم کنید.',
     previewAria: 'پیش‌نمایش پوستر',
     previewEmpty: 'پوستر نهایی شما این شکلی می‌شود. عکس را انتخاب کنید و اسم را بنویسید تا جایگزین شوند.',
-    paperLabel: 'اندازه‌ی کاغذ PDF',
+    paperLabel: 'اندازه‌ی کاغذ PDF', posterLangLabel: 'زبان پوستر',
     save: 'ذخیره در گالری', jpg: 'دانلود JPG', pdf: 'دانلود PDF چاپی', reset: 'پاک کردن',
     saveTip: 'در منویی که باز می‌شود، «Save Image» (آیفون) یا Photos / Gallery (اندروید) را انتخاب کنید.',
     preparing: 'در حال آماده‌سازی…', done: 'پوستر شما آماده است.', again: 'ساخت پوستر جدید',
@@ -200,7 +206,7 @@ const STR = {
     dlFile: 'دانلود فایل', close: 'بستن',
     inApp: 'شما داخل مرورگر داخلی یک برنامه هستید. اگر ذخیره کار نکرد، صفحه را در Safari یا Chrome باز کنید.',
     otherLang: 'English', nameLatin: 'در نام فقط حروف انگلیسی مجاز است.',
-    tplFail: 'فایل Template.jpg بارگذاری نشد. مطمئن شوید کنار همین فایل HTML است و صفحه را از روی سرور یا هاست باز کرده‌اید، نه با file://.',
+    tplFail: 'قالب پوستر (Template.jpg یا Template-de.jpg) بارگذاری نشد. مطمئن شوید هر دو کنار همین فایل HTML هستند و صفحه را از روی سرور یا هاست باز کرده‌اید، نه با file://.',
     imgFail: 'این فایل به‌عنوان عکس خوانده نشد.',
     jpgFail: 'خطا در ساخت JPG: ',
     pdfLib: 'کتابخانه‌ی PDF بارگذاری نشد. اتصال اینترنت را بررسی کنید.',
@@ -249,7 +255,7 @@ if (/FBAN|FBAV|Instagram|Line\/|MicroMessenger|Snapchat|Twitter|; wv\)/i.test(na
 
 /* ---------- Settings (coordinates are on the full-size template canvas) ---------- */
 const CONFIG = {
-  templateSrc: 'Template.jpg',
+  templates: { en: 'Template.jpg', de: 'Template-de.jpg' },   // one background per poster language, same layout
   photoBox: { w: 3866, h: 3200, y: 1150, dx: 12 }, // photo box, matched to the width of the red lines above it; dx = small horizontal shift
   nameZone: { top: 4350, bottom: 5075 },        // empty zone between the photo and the red line
   nameMaxWidth: 3400, nameMaxSize: 340, nameMinSize: 140, nameColor: '#111111',
@@ -263,28 +269,61 @@ const CONFIG = {
 
 const canvas = $('posterCanvas'), ctx = canvas.getContext('2d');
 const nameInput = $('nameInput'), zoomInput = $('zoomInput');
-const template = new Image();
+let template = null;          // background image for the chosen poster language
+let design = null;            // pixel size of the English Template.jpg; every CONFIG coordinate is in this space
 let templateReady = false, tplPreview = null;
 let userImage = null, userPreview = null, imageURL = null;
 let zoom = 1, panX = 0, panY = 0, previewScale = 0.2;
 
 /* ---------- Template ---------- */
-template.onload = async () => {
-  templateReady = true;
-  previewScale = CONFIG.previewWidth / template.naturalWidth;
-  canvas.width = Math.round(template.naturalWidth * previewScale);
-  canvas.height = Math.round(template.naturalHeight * previewScale);
-  // downscale the big template once, so redraws while dragging stay fast
-  tplPreview = document.createElement('canvas');
-  tplPreview.width = canvas.width; tplPreview.height = canvas.height;
-  const pc = tplPreview.getContext('2d');
-  pc.imageSmoothingQuality = 'high';
-  pc.drawImage(template, 0, 0, canvas.width, canvas.height);
-  try { await document.fonts.load('900 300px "Archivo Black"'); } catch (e) { /* fall back to system fonts */ }
-  redraw();
-};
-template.onerror = () => showError('tplFail');
-template.src = CONFIG.templateSrc;
+const tplCache = {};
+function loadTemplate(l) {
+  if (!tplCache[l]) {
+    tplCache[l] = new Promise((resolve, reject) => {
+      const im = new Image();
+      im.onload = () => resolve(im);
+      im.onerror = () => { delete tplCache[l]; reject(new Error(CONFIG.templates[l])); };
+      im.src = CONFIG.templates[l];
+    });
+  }
+  return tplCache[l];
+}
+let tplRequest = 0;
+async function setPosterLang(l) {
+  const req = ++tplRequest;
+  try {
+    const en = await loadTemplate('en');
+    if (!design) design = { w: en.naturalWidth, h: en.naturalHeight };
+    const im = await loadTemplate(l);
+    if (req !== tplRequest) return;            // a newer choice arrived while this one was loading
+    template = im;
+    previewScale = CONFIG.previewWidth / design.w;
+    canvas.width = Math.round(design.w * previewScale);
+    canvas.height = Math.round(design.h * previewScale);
+    // downscale the big template once, so redraws while dragging stay fast (any resolution is stretched to the design size)
+    tplPreview = document.createElement('canvas');
+    tplPreview.width = canvas.width; tplPreview.height = canvas.height;
+    const pc = tplPreview.getContext('2d');
+    pc.imageSmoothingQuality = 'high';
+    pc.drawImage(template, 0, 0, canvas.width, canvas.height);
+    if (!templateReady) { try { await document.fonts.load('900 300px "Archivo Black"'); } catch (e) { /* fall back to system fonts */ } }
+    templateReady = true;
+    if (lastError && lastError.key === 'tplFail') showError('');
+    redraw();
+  } catch (e) {
+    if (req === tplRequest) showError('tplFail');
+  }
+}
+let posterLang = 'en';
+try { posterLang = localStorage.getItem('posterLang') === 'de' ? 'de' : 'en'; } catch (e) {}
+$('posterLang').value = posterLang;
+$('posterLang').addEventListener('change', e => {
+  posterLang = e.target.value;
+  try { localStorage.setItem('posterLang', posterLang); } catch (err) {}
+  $('done').hidden = true;
+  setPosterLang(posterLang);
+});
+setPosterLang(posterLang);
 
 /* ---------- User photo ---------- */
 function makeUserPreview(img) {
@@ -373,7 +412,7 @@ const pointers = new Map();
 let gesture = null;
 function toDesign(p) {
   const rect = canvas.getBoundingClientRect();
-  const k = template.naturalWidth / rect.width;
+  const k = design.w / rect.width;
   return { x: (p.clientX - rect.left) * k, y: (p.clientY - rect.top) * k };
 }
 function pinchInfo(a, b) {
@@ -495,7 +534,7 @@ function drawPhotoPlaceholder(c, W) {
 }
 
 function render(c, scale, tplSrc, imgSrc, ph) {
-  const W = template.naturalWidth, H = template.naturalHeight;
+  const W = design.w, H = design.h;
   c.setTransform(1, 0, 0, 1, 0, 0);
   c.clearRect(0, 0, c.canvas.width, c.canvas.height);
   c.setTransform(scale, 0, 0, scale, 0, 0);
@@ -515,7 +554,7 @@ function render(c, scale, tplSrc, imgSrc, ph) {
 
 /* ---------- Export ---------- */
 function renderFull(limit = CONFIG.maxExportPixels) {
-  const W = template.naturalWidth, H = template.naturalHeight;
+  const W = design.w, H = design.h;
   const k = Math.min(1, Math.sqrt(limit / (W * H)));
   const off = document.createElement('canvas');
   off.width = Math.round(W * k); off.height = Math.round(H * k);
