@@ -37,6 +37,8 @@
   body.fa { font-family:Vazirmatn, Tahoma, sans-serif; }
   .top { text-align:end; }
   button.langbtn { flex:none; min-width:0; width:auto; padding:6px 14px; font-size:14px; background:var(--grey); }
+  body.lang-pick { min-height:100vh; min-height:100dvh; display:flex; align-items:center; justify-content:center; }
+  body.lang-pick .container { width:100%; }
   .emblem { display:block; width:160px; max-width:50%; height:auto; margin:8px auto 4px; }
   .lang-q { text-align:center; line-height:1.9; margin:6px 0 4px; color:var(--muted); }
   .zoom-row { direction:ltr; }
@@ -47,7 +49,7 @@
   @media (max-width:480px) { .btns button { width:100%; } }
 </style>
 </head>
-<body>
+<body class="lang-pick">
 <div class="container" id="langScreen">
   <img class="emblem" src="Lion_and_Sun.png" alt="Lion and Sun" onerror="this.hidden=true">
   <h2>Javidnam Poster Maker</h2>
@@ -161,6 +163,7 @@ function applyLang(l) {
 }
 function chooseLang(l) {
   applyLang(l);
+  document.body.classList.remove('lang-pick');
   document.getElementById('langScreen').hidden = true;
   document.getElementById('container').hidden = false;
 }
