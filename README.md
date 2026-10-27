@@ -1,4 +1,6 @@
-# Javidnam Poster Maker
+# JavidYad · جاویدیاد
+
+In memory of the Javidnaman · به یاد جاویدنامان
 
 Live at https://javidyad.com. A free tool to make a printable memorial poster for people killed in Iran's January protests, for the ceremony on 7 November 2026 in Frankfurt. Photos are processed only on the visitor's device.
 

@@ -1,8 +1,8 @@
 // Javidnam list (javidnam.html): people by province and city, search, and links into the poster maker.
-import { $, el, urlLang, savedLang, translatePage } from './common.js?v=202610271421';
+import { $, el, urlLang, savedLang, translatePage } from './common.js?v=202610271429';
 const STR = {
   en: {
-    title: 'Choose a Javidnam', back: '← Back',
+    title: 'Choose a Javidnam', docTitle: 'Choose a Javidnam · JavidYad', back: '← Back',
     step1: 'Pick a province and city', step2: 'Tap a photo', step3: 'The poster is ready to print',
     searchPh: 'Search by name', provLabel: 'Choose a province', cityLabel: 'Choose a city', quick: 'Quick filters',
     all: 'All', allProvinces: 'All provinces', allCities: 'All cities', up: '← All provinces',
@@ -17,7 +17,7 @@ const STR = {
     otherLang: 'فارسی'
   },
   fa: {
-    title: 'فهرست جاویدنامان', back: '→ بازگشت به پوستر‌ساز',
+    title: 'فهرست جاویدنامان', docTitle: 'فهرست جاویدنامان · جاویدیاد', back: '→ بازگشت به جاویدیاد',
     step1: 'استان و شهر را انتخاب کنید', step2: 'روی عکس بزنید', step3: 'پوستر آماده‌ی چاپ است',
     searchPh: 'جستجوی نام', provLabel: 'انتخاب استان', cityLabel: 'انتخاب شهر', quick: 'انتخاب سریع',
     all: 'همه', allProvinces: 'همه‌ی استان‌ها', allCities: 'همه‌ی شهرها', up: '→ همه‌ی استان‌ها',

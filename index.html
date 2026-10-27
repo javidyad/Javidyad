@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Javidnam Poster Maker</title>
-<meta name="description" content="Make a memorial poster for a Javidnam. Your photo never leaves your device.">
-<meta property="og:title" content="Javidnam Poster Maker">
+<title>جاویدیاد · به یاد جاویدنامان</title>
+<meta name="description" content="JavidYad, in memory of the Javidnaman. Make a memorial poster for a Javidnam. Your photo never leaves your device.">
+<meta property="og:title" content="جاویدیاد · به یاد جاویدنامان">
 <meta property="og:description" content="Make a memorial poster for a Javidnam. Your photo never leaves your device. · پوستر یادبود جاویدنام بسازید. عکس شما از دستگاهتان خارج نمی‌شود.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://javidyad.com/">
@@ -18,14 +18,14 @@
 <meta name="theme-color" content="#1b2a4a">
 <!-- jsPDF 2.5.1, self-hosted so no third-party request is made -->
 <script src="lib/jspdf.umd.min.js"></script>
-<link rel="stylesheet" href="css/base.css?v=202610271421">
-<link rel="stylesheet" href="css/poster.css?v=202610271421">
+<link rel="stylesheet" href="css/base.css?v=202610271429">
+<link rel="stylesheet" href="css/poster.css?v=202610271429">
 </head>
 <body class="lang-pick">
 
 <div class="container" id="langScreen">
   <img class="emblem" src="Lion_and_Sun.png" alt="Lion and Sun" onerror="this.hidden=true">
-  <h2>Javidnam Poster Maker</h2>
+  <h2>JavidYad<span class="tagline" lang="fa">جاویدیاد · به یاد جاویدنامان</span></h2>
   <p class="lang-q">Choose your language<br>زبان خود را انتخاب کنید</p>
   <div class="btns">
     <button data-lang="en" dir="ltr">English</button>
@@ -35,7 +35,7 @@
 
 <div class="container" id="container" hidden>
   <div class="top"><img class="mini" src="Lion_and_Sun.png" alt="" onerror="this.hidden=true"><button id="langBtn" class="langbtn alt" type="button"></button></div>
-  <h2 data-i18n="title"></h2>
+  <h2><span data-i18n="title"></span><span class="tagline" data-i18n="tagline"></span></h2>
   <div class="warn" id="inApp" data-i18n="inApp" hidden></div>
 
   <div class="paper">
@@ -100,6 +100,6 @@
   </div>
 </div>
 
-<script type="module" src="js/poster.js?v=202610271421"></script>
+<script type="module" src="js/poster.js?v=202610271429"></script>
 </body>
 </html>

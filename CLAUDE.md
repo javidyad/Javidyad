@@ -1,6 +1,8 @@
-# Javidnam Poster Maker
+# JavidYad (جاویدیاد)
 
-A one-page web tool that turns a portrait photo and a name into a printable memorial poster for people killed during Iran's nationwide protests in January. It is built for the ceremony on **7 November 2026 (16 Aban) at the Paulskirche in Frankfurt**, where Prince Reza Pahlavi accepts the Friedrich Naumann Foundation's 2026 Freedom Prize on behalf of the Iranian people. People print the posters and hold them up, so they must read clearly in photos and videos.
+Name and tagline, approved by the owner: **جاویدیاد · به یاد جاویدنامان** (English: **JavidYad · In memory of the Javidnaman**). It matches the domain javidyad.com.
+
+A web tool that turns a portrait photo and a name into a printable memorial poster for people killed during Iran's nationwide protests in January. It is built for the ceremony on **7 November 2026 (16 Aban) at the Paulskirche in Frankfurt**, where Prince Reza Pahlavi accepts the Friedrich Naumann Foundation's 2026 Freedom Prize on behalf of the Iranian people. People print the posters and hold them up, so they must read clearly in photos and videos.
 
 The owner speaks Persian. Reply to him in Persian unless he writes in another language. Code, comments and commit messages stay in English.
 

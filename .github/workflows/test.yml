@@ -14,5 +14,8 @@ jobs:
         with:
           node-version: 22
       - run: npm install --no-save --prefix tests playwright@1.63.0
-      - run: npx --prefix tests playwright install --with-deps chromium
+      # the runner image already has Google Chrome, so no browser download (which can stall)
       - run: NODE_PATH=tests/node_modules node tests/smoke.js
+        env:
+          PW_CHANNEL: chrome
+        timeout-minutes: 5

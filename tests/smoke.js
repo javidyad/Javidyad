@@ -56,7 +56,8 @@ async function main() {
   const people = checkData();
   const server = await serve();
   const base = `http://127.0.0.1:${server.address().port}/`;
-  const browser = await chromium.launch();
+  // CI uses the runner's installed Chrome (PW_CHANNEL=chrome) instead of downloading a browser
+  const browser = await chromium.launch(process.env.PW_CHANNEL ? { channel: process.env.PW_CHANNEL } : {});
   const problems = [];
   const context = await browser.newContext({ viewport: { width: 390, height: 844 }, acceptDownloads: true });
   context.on('page', watch);
