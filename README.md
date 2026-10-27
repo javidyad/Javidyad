@@ -1,4 +1,4 @@
-# poster-generator
+# Javidnam Poster Maker
 
 Javidnam Poster Maker, live at https://javidyad.com.
 
