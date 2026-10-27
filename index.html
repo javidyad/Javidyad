@@ -58,6 +58,10 @@
   .sr { position:absolute; width:1px; height:1px; opacity:0; overflow:hidden; }
   label.field { display:block; margin:16px 0 6px; font-weight:700; font-size:14px; }
   input[type=text] { width:100%; padding:12px; border:1px solid var(--line); border-radius:8px; font-size:16px; background:transparent; color:inherit; font-family:inherit; }
+  .paper { display:flex; align-items:center; gap:10px; margin-top:14px; }
+  .paper label { font-weight:700; font-size:14px; }
+  select { padding:8px 12px; border:1px solid var(--line); border-radius:8px; font:inherit; font-size:16px; background:transparent; color:inherit; }
+  select option { color:#161616; }
   .privacy, .note { font-size:13px; color:var(--muted); margin-top:6px; line-height:1.7; }
 
   .stage { margin-top:14px; }
@@ -116,6 +120,10 @@
   <label class="field" for="nameInput" data-i18n="nameLabel"></label>
   <input type="text" id="nameInput" dir="ltr" maxlength="40" autocapitalize="words" autocomplete="off" spellcheck="false" data-i18n-ph="namePh">
 
+  <div class="paper">
+    <label for="paperSize" data-i18n="paperLabel"></label>
+    <select id="paperSize"><option value="a3">A3</option><option value="a4">A4</option></select>
+  </div>
   <div class="btns">
     <button id="saveBtn" class="primary" data-i18n="save" disabled></button>
     <button id="jpgBtn" class="alt" data-i18n="jpg" disabled></button>
@@ -155,6 +163,7 @@ const STR = {
     zoomLabel: 'Photo zoom',
     hint: 'Drag the photo to reposition it. Pinch with two fingers, or use the slider or mouse wheel, to zoom.',
     previewAria: 'Poster preview',
+    paperLabel: 'PDF paper size',
     save: 'Save to gallery', jpg: 'Download JPG', pdf: 'Download print PDF', reset: 'Reset',
     saveTip: 'In the menu that opens, choose “Save Image” (iPhone) or Photos / Gallery (Android).',
     preparing: 'Preparing…', done: 'Your poster is ready.', again: 'Make another poster',
@@ -177,6 +186,7 @@ const STR = {
     zoomLabel: 'زوم عکس',
     hint: 'عکس را بکشید تا جابه‌جا شود. با دو انگشت (پینچ)، اسلایدر یا چرخ ماوس می‌توانید زوم کنید.',
     previewAria: 'پیش‌نمایش پوستر',
+    paperLabel: 'اندازه‌ی کاغذ PDF',
     save: 'ذخیره در گالری', jpg: 'دانلود JPG', pdf: 'دانلود PDF چاپی', reset: 'پاک کردن',
     saveTip: 'در منویی که باز می‌شود، «Save Image» (آیفون) یا Photos / Gallery (اندروید) را انتخاب کنید.',
     preparing: 'در حال آماده‌سازی…', done: 'پوستر شما آماده است.', again: 'ساخت پوستر جدید',
@@ -550,7 +560,7 @@ $('pdfBtn').addEventListener('click', () => withBusy($('pdfBtn'), async () => {
   if (!window.jspdf) return showError('pdfLib');
   try {
     const off = renderFull();
-    const pdf = new window.jspdf.jsPDF({ unit: 'mm', format: 'a3', orientation: 'portrait' });
+    const pdf = new window.jspdf.jsPDF({ unit: 'mm', format: $('paperSize').value, orientation: 'portrait' });
     const pw = pdf.internal.pageSize.getWidth(), ph = pdf.internal.pageSize.getHeight();
     let w = pw, h = pw * off.height / off.width;
     if (h > ph) { h = ph; w = ph * off.width / off.height; }
