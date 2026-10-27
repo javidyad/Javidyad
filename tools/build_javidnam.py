@@ -35,7 +35,7 @@ from PIL import Image, ImageOps
 FULL_MAX = 3200          # the photo box is about 3100 px wide in a 16 MP export
 THUMB_W, THUMB_H = 360, 480
 FOCUS_Y = 0.3            # same framing as CONFIG.focusY in index.html: keep faces in the crop
-MIN_SIDE = 1000          # the owner's quality rule
+MIN_SIDE = 1000          # the owner's quality rule; js/poster.js warns below the same size (CONFIG.minPhotoSide)
 NAME_RE = re.compile(r"^[A-Za-z .'’-]{1,40}$")
 IMAGE_EXT = {".jpg", ".jpeg", ".png", ".webp", ".heic", ".tif", ".tiff", ".bmp"}
 
