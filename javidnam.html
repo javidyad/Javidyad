@@ -74,8 +74,8 @@
   .card .latin { direction:ltr; font-size:12px; color:var(--muted); }
   body.fa .card .latin { text-align:right; }
   .card .go { margin-top:auto; padding-top:6px; font-size:13px; font-weight:700; color:var(--primary); }
-  .credit { margin:-4px 0 12px; font-size:12px; color:var(--muted); text-align:center; line-height:1.7; }
-  .credit a { color:var(--primary); }
+  .about { margin:0 0 12px; padding:10px 12px; border-inline-start:3px solid var(--gold); border-radius:6px; background:var(--card); font-size:13px; color:var(--muted); line-height:1.8; }
+  .about a { color:var(--primary); font-weight:700; }
   .status { margin:28px 0; text-align:center; color:var(--muted); line-height:1.8; }
   [hidden] { display:none !important; }
 </style>
@@ -93,7 +93,7 @@
     <li data-i18n="step2"></li>
     <li data-i18n="step3"></li>
   </ol>
-  <p class="credit"><span data-i18n="credit"></span> <a href="https://javidnaman.iranintl.com/" target="_blank" rel="noopener noreferrer" data-i18n="creditLink"></a></p>
+  <p class="about" id="about" hidden></p>
 
   <div class="filters" id="filters" hidden>
     <input type="search" id="search" autocomplete="off" spellcheck="false" data-i18n-ph="searchPh" data-i18n-aria="searchPh">
@@ -117,7 +117,9 @@ const STR = {
     all: 'All', allProvinces: 'All provinces', allCities: 'All cities', up: '← All provinces',
     allOf: n => `All of ${n}`, provinceOf: n => `${n} Province`,
     unknownPlace: 'Place not recorded', unknownCity: 'City not recorded',
-    credit: 'Names and photos from', creditLink: 'Iran International’s Javidnaman platform',
+    // why the list is short: only photos sharp enough to print were taken from the platform
+    about: (n, source, own) => [`The ${n} Javidnaman in this list come from `, source, ', chosen because their photos have the minimum quality needed to print a poster. Thousands of other names on the platform are not included here. If you cannot find someone, you can ', own, '.'],
+    sourceLink: 'Iran International’s Javidnaman platform', ownLink: 'make a poster with your own photo',
     people: n => n === 1 ? '1 person' : `${n} people`, make: 'Make poster →',
     loading: 'Loading the list…', empty: 'The list is being prepared. You can still make a poster with your own photo.',
     noMatch: 'No name matches your search.', failed: 'The list could not be loaded. Check your connection and reload the page.',
@@ -130,7 +132,8 @@ const STR = {
     all: 'همه', allProvinces: 'همه‌ی استان‌ها', allCities: 'همه‌ی شهرها', up: '→ همه‌ی استان‌ها',
     allOf: n => `همه‌ی ${n}`, provinceOf: n => `استان ${n}`,
     unknownPlace: 'محل ثبت نشده', unknownCity: 'شهر ثبت نشده',
-    credit: 'نام‌ها و عکس‌ها برگرفته از', creditLink: 'پلتفرم جاویدنامان ایران اینترنشنال',
+    about: (n, source, own) => [`${n} جاویدنامی که در این فهرست می‌بینید از `, source, ' برگرفته شده‌اند، چون عکسشان حداقل کیفیت لازم برای چاپ پوستر را دارد. هزاران نام دیگر در آن پلتفرم هست که در این فهرست نیامده‌اند. اگر عزیزی را پیدا نکردید، می‌توانید ', own, '.'],
+    sourceLink: 'پلتفرم جاویدنامان ایران اینترنشنال', ownLink: 'با عکس خودتان پوستر بسازید',
     people: n => `${n.toLocaleString('fa')} نفر`, make: 'ساخت پوستر ←',
     loading: 'در حال بارگذاری فهرست…', empty: 'فهرست در حال آماده شدن است. همچنان می‌توانید با عکس خودتان پوستر بسازید.',
     noMatch: 'نامی با این جستجو پیدا نشد.', failed: 'فهرست بارگذاری نشد. اتصال اینترنت را بررسی کنید و صفحه را دوباره باز کنید.',
@@ -230,8 +233,18 @@ function renderResults() {
   if (!match.length) $('status').textContent = t('noMatch');
 }
 
+function renderAbout() {
+  const ready = status === 'ready';
+  $('about').hidden = !ready;
+  if (!ready) return;
+  const source = el('a', { href: 'https://javidnaman.iranintl.com/', target: '_blank', rel: 'noopener noreferrer', textContent: t('sourceLink') });
+  const own = el('a', { href: `index.html?lang=${lang}`, textContent: t('ownLink') });
+  $('about').replaceChildren(...t('about')(num(people.length), source, own));
+}
+
 function render() {
   $('filters').hidden = !(people && people.length);
+  renderAbout();
   if (status !== 'ready') { $('results').replaceChildren(); $('status').hidden = false; $('status').textContent = t(status); return; }
   renderFilters(); renderResults();
 }
