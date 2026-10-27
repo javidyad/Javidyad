@@ -6,7 +6,7 @@
 <title>Javidnam Poster Maker</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Vazirmatn:wght@400;700;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Vazirmatn:wght@400;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
   :root { --bg:#f4f4f9; --card:#fff; --text:#222; --muted:#666; --line:#ccc; --blue:#0b6bdc; --green:#1c8a3a; --grey:#5b636b; }
@@ -39,6 +39,9 @@
   button.langbtn { flex:none; min-width:0; width:auto; padding:6px 14px; font-size:14px; background:var(--grey); }
   .lang-q { text-align:center; line-height:1.9; margin:6px 0 4px; color:var(--muted); }
   .zoom-row { direction:ltr; }
+  .privacy { font-size:13px; color:var(--muted); margin-top:6px; line-height:1.7; }
+  .info { margin-top:8px; padding:8px 10px; border-radius:6px; background:#dbeafe; color:#0b3a7a; font-size:13px; }
+  button.primary { flex:1 1 100%; }
   [hidden] { display:none !important; }
   @media (max-width:480px) { .btns button { width:100%; } }
 </style>
@@ -59,10 +62,11 @@
 
   <label for="imageInput" data-i18n="photoLabel"></label>
   <input type="file" id="imageInput" accept="image/*">
+  <div class="privacy" data-i18n="privacy"></div>
   <div class="warn" id="lowRes" data-i18n="lowRes" hidden></div>
 
   <label for="nameInput" data-i18n="nameLabel"></label>
-  <input type="text" id="nameInput" dir="auto" data-i18n-ph="namePh">
+  <input type="text" id="nameInput" dir="ltr" autocapitalize="words" autocomplete="off" spellcheck="false" data-i18n-ph="namePh">
 
   <label for="zoomInput" data-i18n="zoomLabel"></label>
   <div class="zoom-row">
@@ -71,10 +75,12 @@
   </div>
 
   <div class="btns">
+    <button id="saveBtn" class="primary" data-i18n="save" disabled></button>
     <button id="jpgBtn" data-i18n="jpg" disabled></button>
     <button id="pdfBtn" class="pdf" data-i18n="pdf" disabled></button>
     <button id="resetBtn" class="reset" data-i18n="reset"></button>
   </div>
+  <div class="privacy" data-i18n="saveTip"></div>
   <div class="error" id="errorBox" hidden></div>
 
   <div class="stage">
@@ -92,7 +98,12 @@ const STR = {
     lowRes: 'This image has a low resolution and may look blurry in a large print. Use a larger version if you have one.',
     nameLabel: 'Enter the full name in English letters', namePh: 'Full Name', zoomLabel: 'Photo zoom',
     jpg: 'Download JPG', pdf: 'Download print PDF', reset: 'Reset',
-    hint: 'Drag the photo in the preview to reposition it. Use the slider or mouse wheel to zoom.',
+    hint: 'Drag the photo in the preview to reposition it. Pinch with two fingers, or use the slider or mouse wheel, to zoom.',
+    privacy: 'Your photo is processed only on your device. It is never uploaded or sent anywhere.',
+    save: 'Save to gallery',
+    saveTip: 'In the menu that opens, choose “Save Image” (iPhone) or Photos / Gallery (Android).',
+    shareFallback: 'Your browser cannot open the share menu, so the image was downloaded instead.',
+    nameLatin: 'Only English letters are allowed in the name.',
     previewAria: 'Poster preview', otherLang: 'فارسی',
     tplFail: 'Template.jpg could not be loaded. Make sure it is in the same folder as this HTML file and that the page is opened from a server or host, not via file://.',
     imgFail: 'This file could not be read as an image.',
@@ -107,7 +118,12 @@ const STR = {
     lowRes: 'رزولوشن این عکس پایین است و در چاپ بزرگ کدر دیده می‌شود. اگر نسخه‌ی بزرگ‌تری دارید از آن استفاده کنید.',
     nameLabel: 'نام کامل را با حروف انگلیسی وارد کنید', namePh: 'Full Name', zoomLabel: 'زوم عکس',
     jpg: 'دانلود JPG', pdf: 'دانلود PDF چاپی', reset: 'پاک کردن',
-    hint: 'عکس را روی پیش‌نمایش بکشید تا جابه‌جا شود. با اسلایدر یا چرخ ماوس هم می‌توانید زوم کنید.',
+    hint: 'عکس را روی پیش‌نمایش بکشید تا جابه‌جا شود. با دو انگشت (پینچ)، اسلایدر یا چرخ ماوس می‌توانید زوم کنید.',
+    privacy: 'عکس شما فقط روی دستگاه خودتان پردازش می‌شود و به هیچ جا آپلود یا ارسال نمی‌شود.',
+    save: 'ذخیره در گالری',
+    saveTip: 'در منویی که باز می‌شود، «Save Image» (آیفون) یا Photos / Gallery (اندروید) را انتخاب کنید.',
+    shareFallback: 'مرورگر شما منوی اشتراک‌گذاری را پشتیبانی نمی‌کند، به همین دلیل عکس دانلود شد.',
+    nameLatin: 'در نام فقط حروف انگلیسی مجاز است.',
     previewAria: 'پیش‌نمایش پوستر', otherLang: 'English',
     tplFail: 'فایل Template.jpg بارگذاری نشد. مطمئن شوید کنار همین فایل HTML است و صفحه را از روی سرور یا هاست باز کرده‌اید، نه با file://.',
     imgFail: 'این فایل به‌عنوان عکس خوانده نشد.',
@@ -123,10 +139,11 @@ const t = k => STR[lang][k];
 
 function renderError() {
   const b = document.getElementById('errorBox');
-  if (lastError) { b.textContent = t(lastError.key) + lastError.extra; b.hidden = false; }
+  if (lastError) { b.className = lastError.kind; b.textContent = t(lastError.key) + lastError.extra; b.hidden = false; }
   else b.hidden = true;
 }
-function showError(key, extra = '') { lastError = key ? { key, extra } : null; renderError(); }
+function showMsg(key, extra = '', kind = 'error') { lastError = key ? { key, extra, kind } : null; renderError(); }
+function showError(key, extra = '') { showMsg(key, extra, 'error'); }
 
 function applyLang(l) {
   lang = l;
@@ -158,8 +175,8 @@ const CONFIG = {
   nameMinSize: 140,
   nameColor: '#111111',
   latinFont: '"Archivo Black", "Arial Black", Impact, sans-serif',
-  persianFont: '"Vazirmatn", Tahoma, sans-serif',
-  previewWidth: 900,                            // preview canvas width in px
+    previewWidth: 900,                            // preview canvas width in px
+  shareMaxPixels: 9000000,                      // smaller export for the share sheet (renders fast, keeps the tap valid on iOS)
   maxExportPixels: 16000000,                    // safe pixel limit for iOS Safari
   lowResRatio: 0.5                              // warn if image width is below this fraction of the photo box
 };
@@ -181,7 +198,7 @@ template.onload = async () => {
   canvas.width = Math.round(template.naturalWidth * previewScale);
   canvas.height = Math.round(template.naturalHeight * previewScale);
   await loadFonts();
-  $('jpgBtn').disabled = $('pdfBtn').disabled = false;
+  ['saveBtn', 'jpgBtn', 'pdfBtn'].forEach(id => { $(id).disabled = false; });
   redraw();
 };
 template.onerror = () => showError('tplFail');
@@ -189,10 +206,7 @@ template.src = CONFIG.templateSrc;
 
 async function loadFonts() {
   try {
-    await Promise.all([
-      document.fonts.load('900 300px "Archivo Black"'),
-      document.fonts.load('900 300px "Vazirmatn"', '\u0633\u0644\u0627\u0645')
-    ]);
+    await document.fonts.load('900 300px "Archivo Black"');
   } catch (e) { /* fall back to system fonts */ }
 }
 
@@ -219,7 +233,14 @@ const container = $('container');
 ['dragleave', 'drop'].forEach(t => container.addEventListener(t, e => { e.preventDefault(); container.classList.remove('dragover'); }));
 container.addEventListener('drop', e => { if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]); });
 
-nameInput.addEventListener('input', redraw);
+nameInput.addEventListener('input', e => {
+  if (!e.isComposing) {
+    const clean = nameInput.value.replace(/[^A-Za-z\s.'’-]/g, '');
+    if (clean !== nameInput.value) { nameInput.value = clean; showMsg('nameLatin', '', 'warn'); }
+    else if (lastError && lastError.key === 'nameLatin') showError('');
+  }
+  redraw();
+});
 
 /* ---------- Zoom and pan ---------- */
 function updateZoomLabel() { $('zoomLabel').textContent = Math.round(zoom * 100) + '%'; }
@@ -249,28 +270,58 @@ function clampPan() {
   panY = Math.min(maxY, Math.max(-maxY, panY));
 }
 
-let drag = null;
-function toDesign(e) {
+const pointers = new Map();
+let gesture = null;
+function toDesign(p) {
   const rect = canvas.getBoundingClientRect();
   const k = template.naturalWidth / rect.width;
-  return { x: (e.clientX - rect.left) * k, y: (e.clientY - rect.top) * k };
+  return { x: (p.clientX - rect.left) * k, y: (p.clientY - rect.top) * k };
+}
+function pinchInfo(a, b) {
+  return {
+    dist: Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY) || 1,
+    mid: toDesign({ clientX: (a.clientX + b.clientX) / 2, clientY: (a.clientY + b.clientY) / 2 })
+  };
+}
+function startGesture() {
+  const pts = [...pointers.values()];
+  if (pts.length === 1) {
+    const d = toDesign(pts[0]);
+    gesture = { type: 'pan', sx: d.x - panX, sy: d.y - panY };
+  } else if (pts.length >= 2) {
+    gesture = { type: 'pinch', zoom, panX, panY, ...pinchInfo(pts[0], pts[1]) };
+  } else gesture = null;
 }
 canvas.addEventListener('pointerdown', e => {
   if (!userImage) return;
   canvas.setPointerCapture(e.pointerId);
-  const p = toDesign(e);
-  drag = { sx: p.x - panX, sy: p.y - panY };
+  pointers.set(e.pointerId, { clientX: e.clientX, clientY: e.clientY });
+  startGesture();
   canvas.classList.add('dragging');
 });
 canvas.addEventListener('pointermove', e => {
-  if (!drag) return;
-  const p = toDesign(e);
-  panX = p.x - drag.sx; panY = p.y - drag.sy;
+  if (!gesture || !pointers.has(e.pointerId)) return;
+  pointers.set(e.pointerId, { clientX: e.clientX, clientY: e.clientY });
+  const pts = [...pointers.values()];
+  if (gesture.type === 'pan' && pts.length === 1) {
+    const p = toDesign(pts[0]);
+    panX = p.x - gesture.sx; panY = p.y - gesture.sy;
+  } else if (gesture.type === 'pinch' && pts.length >= 2) {
+    const now = pinchInfo(pts[0], pts[1]);
+    zoom = Math.min(3, Math.max(1, gesture.zoom * now.dist / gesture.dist));
+    zoomInput.value = zoom; updateZoomLabel();
+    panX = gesture.panX + (now.mid.x - gesture.mid.x);
+    panY = gesture.panY + (now.mid.y - gesture.mid.y);
+  } else return;
   clampPan(); redraw();
 });
-const endDrag = () => { drag = null; canvas.classList.remove('dragging'); };
-canvas.addEventListener('pointerup', endDrag);
-canvas.addEventListener('pointercancel', endDrag);
+function endPointer(e) {
+  pointers.delete(e.pointerId);
+  startGesture();
+  if (!pointers.size) canvas.classList.remove('dragging');
+}
+canvas.addEventListener('pointerup', endPointer);
+canvas.addEventListener('pointercancel', endPointer);
 
 /* ---------- Drawing ---------- */
 let raf = 0;
@@ -279,8 +330,6 @@ function redraw() {
   cancelAnimationFrame(raf);
   raf = requestAnimationFrame(() => render(ctx, previewScale));
 }
-
-function isPersian(t) { return /[\u0600-\u06FF]/.test(t); }
 
 // choose the line break that makes both lines closest in width
 function splitName(c, words) {
@@ -295,15 +344,13 @@ function splitName(c, words) {
 function drawName(c, W) {
   const text = nameInput.value.trim().replace(/\s+/g, ' ');
   if (!text) return;
-  const fa = isPersian(text);
-  const fam = fa ? CONFIG.persianFont : CONFIG.latinFont;
-  const fontAt = s => `900 ${s}px ${fam}`;
+  const fontAt = sz => `900 ${sz}px ${CONFIG.latinFont}`;
   const words = text.split(' ');
 
   c.fillStyle = CONFIG.nameColor;
   c.textAlign = 'center';
   c.textBaseline = 'alphabetic';
-  c.direction = fa ? 'rtl' : 'ltr';
+  c.direction = 'ltr';
 
   c.font = fontAt(CONFIG.nameMaxSize);
   const lines = words.length > 1 ? splitName(c, words) : [text];
@@ -317,7 +364,7 @@ function drawName(c, W) {
   c.font = fontAt(size);
 
   const { top, bottom } = CONFIG.nameZone;
-  const capH = size * (fa ? 0.62 : 0.72), gap = size * 0.18;
+  const capH = size * 0.72, gap = size * 0.18;
   const blockH = capH * lines.length + gap * (lines.length - 1);
   let y = top + (bottom - top - blockH) / 2 + capH;
   lines.forEach(l => { c.fillText(l, W / 2, y); y += capH + gap; });
@@ -343,9 +390,9 @@ function render(c, scale) {
 }
 
 /* ---------- Export ---------- */
-function renderFull() {
+function renderFull(limit = CONFIG.maxExportPixels) {
   const W = template.naturalWidth, H = template.naturalHeight;
-  const k = Math.min(1, Math.sqrt(CONFIG.maxExportPixels / (W * H)));
+  const k = Math.min(1, Math.sqrt(limit / (W * H)));
   const off = document.createElement('canvas');
   off.width = Math.round(W * k); off.height = Math.round(H * k);
   render(off.getContext('2d'), k);
@@ -356,18 +403,36 @@ function fileBase() {
   return 'poster-' + (n || 'javidnam');
 }
 
-$('jpgBtn').addEventListener('click', () => {
+function makeJpegBlob(limit) {
+  return new Promise((resolve, reject) => {
+    try { renderFull(limit).toBlob(b => (b ? resolve(b) : reject(new Error('empty'))), 'image/jpeg', 0.95); }
+    catch (e) { reject(e); }
+  });
+}
+function downloadBlob(blob, name) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = name; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+
+$('saveBtn').addEventListener('click', async () => {
   showError('');
   try {
-    renderFull().toBlob(b => {
-      if (!b) return showError('blobFail');
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(b);
-      a.download = fileBase() + '.jpg';
-      a.click();
-      setTimeout(() => URL.revokeObjectURL(a.href), 2000);
-    }, 'image/jpeg', 0.95);
+    const blob = await makeJpegBlob(CONFIG.shareMaxPixels);
+    const file = new File([blob], fileBase() + '.jpg', { type: 'image/jpeg' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try { await navigator.share({ files: [file] }); return; }
+      catch (e) { if (e.name === 'AbortError') return; }
+    }
+    downloadBlob(blob, file.name);
+    showMsg('shareFallback', '', 'info');
   } catch (e) { showError('jpgFail', e.message); }
+});
+
+$('jpgBtn').addEventListener('click', async () => {
+  showError('');
+  try { downloadBlob(await makeJpegBlob(), fileBase() + '.jpg'); }
+  catch (e) { showError('jpgFail', e.message); }
 });
 
 $('pdfBtn').addEventListener('click', () => {
