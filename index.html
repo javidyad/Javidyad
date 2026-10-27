@@ -4,22 +4,25 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Javidnam Poster Maker</title>
+<meta name="description" content="Make a memorial poster for a Javidnam. Your photo never leaves your device.">
 <meta property="og:title" content="Javidnam Poster Maker">
+<meta property="og:description" content="Make a memorial poster for a Javidnam. Your photo never leaves your device. · پوستر یادبود جاویدنام بسازید. عکس شما از دستگاهتان خارج نمی‌شود.">
 <meta property="og:type" content="website">
-<!-- For link previews in WhatsApp/Telegram, change og:image to the full URL (https://...) of this image on your site -->
-<meta property="og:image" content="Lion_and_Sun.png">
+<meta property="og:url" content="https://javidyad.com/">
+<meta property="og:image" content="https://javidyad.com/og-image.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Lion and Sun emblem">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="Lion_and_Sun.png">
 <meta name="theme-color" content="#1b2a4a">
-<!-- jsPDF: loads lib/jspdf.umd.min.js from your repo first, and falls back to the CDN if that file is missing -->
-<script src="lib/jspdf.umd.min.js" onerror="var s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';document.head.appendChild(s)"></script>
+<!-- jsPDF 2.5.1, self-hosted so no third-party request is made -->
+<script src="lib/jspdf.umd.min.js"></script>
 <style>
-  /* Fonts are loaded from the fonts/ folder in your repo (see README notes). If a file is missing, system fonts are used. */
-  @font-face { font-family:"Archivo Black"; font-weight:100 900; font-display:swap;
-    src:url(fonts/ArchivoBlack-Regular.woff2) format("woff2"), url(fonts/ArchivoBlack-Regular.ttf) format("truetype"); }
-  @font-face { font-family:Vazirmatn; font-weight:400; font-display:swap;
-    src:url(fonts/Vazirmatn-Regular.woff2) format("woff2"), url(fonts/Vazirmatn-Regular.ttf) format("truetype"); }
-  @font-face { font-family:Vazirmatn; font-weight:700; font-display:swap;
-    src:url(fonts/Vazirmatn-Bold.woff2) format("woff2"), url(fonts/Vazirmatn-Bold.ttf) format("truetype"); }
+  /* Self-hosted fonts (SIL Open Font License, see fonts/). System fonts are used while they load. */
+  @font-face { font-family:"Archivo Black"; font-weight:100 900; font-display:swap; src:url(fonts/ArchivoBlack-Regular.woff2) format("woff2"); }
+  @font-face { font-family:Vazirmatn; font-weight:400; font-display:swap; src:url(fonts/Vazirmatn-Regular.woff2) format("woff2"); }
+  @font-face { font-family:Vazirmatn; font-weight:700; font-display:swap; src:url(fonts/Vazirmatn-Bold.woff2) format("woff2"); }
 
   :root { --primary:#1b2a4a; --on-primary:#ffffff; --alt:#1b2a4a; --gold:#b98a1f; --ink:#161616; --paper:#fffdf8; --page:#f1ede3; --muted:#6b665c; --line:#d6cfbf; }
   @media (prefers-color-scheme: dark) {
