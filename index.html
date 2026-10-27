@@ -1,365 +1,320 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" dir="ltr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Javidnam Poster Maker</title>
-    <!-- jsPDF library for high quality PDF output -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <style>
-        body {
-            font-family: Tahoma, sans-serif;
-            background: #f4f4f9;
-            text-align: center;
-            padding: 10px;
-            margin: 0;
-            box-sizing: border-box;
-        }
-        .container {
-            background: #fff;
-            max-width: 600px;
-            width: 100%;
-            margin: 0 auto;
-            padding: 15px;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            box-sizing: border-box;
-        }
-        .form-group {
-            margin: 15px 0;
-            text-align: left;
-        }
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-            color: #333;
-            font-size: 14px;
-        }
-        input[type="file"], input[type="text"] {
-            width: 100%;
-            padding: 12px;
-            box-sizing: border-box;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            font-size: 16px;
-        }
-        .btn-group {
-            display: flex;
-            gap: 10px;
-            margin-top: 15px;
-            flex-wrap: wrap;
-        }
-        button {
-            flex: 1;
-            padding: 14px;
-            background: #007bff;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: bold;
-            min-width: 130px;
-        }
-        button:hover {
-            background: #0056b3;
-        }
-        button.pdf-btn {
-            background: #28a745;
-        }
-        button.pdf-btn:hover {
-            background: #218838;
-        }
-        button.reset-btn {
-            background: #6c757d;
-        }
-        button.reset-btn:hover {
-            background: #5a6268;
-        }
-        .canvas-container {
-            position: relative;
-            margin-top: 15px;
-        }
-        canvas {
-            max-width: 100%;
-            height: auto;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-            cursor: grab;
-            touch-action: none;
-        }
-        canvas:active {
-            cursor: grabbing;
-        }
-        .hint {
-            font-size: 13px;
-            color: #666;
-            margin-top: 6px;
-        }
-
-        @media (max-width: 480px) {
-            body {
-                padding: 5px;
-            }
-            .container {
-                padding: 10px;
-                border-radius: 8px;
-            }
-            .btn-group {
-                flex-direction: column;
-            }
-            button {
-                width: 100%;
-            }
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Javidnam Poster Maker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Vazirmatn:wght@900&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  :root { --bg:#f4f4f9; --card:#fff; --text:#222; --muted:#666; --line:#ccc; --blue:#0b6bdc; --green:#1c8a3a; --grey:#5b636b; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#17181c; --card:#23252b; --text:#eee; --muted:#a0a4ab; --line:#464a52; }
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; padding:10px; background:var(--bg); color:var(--text); font-family:"Segoe UI", Tahoma, Arial, sans-serif; }
+  .container { max-width:640px; margin:0 auto; padding:16px; background:var(--card); border-radius:12px; box-shadow:0 4px 15px rgba(0,0,0,.1); transition:outline-color .15s; outline:3px dashed transparent; }
+  .container.dragover { outline-color:var(--blue); }
+  h2 { text-align:center; margin:4px 0 12px; }
+  label { display:block; margin:14px 0 5px; font-weight:bold; font-size:14px; }
+  input[type=file], input[type=text] { width:100%; padding:11px; border:1px solid var(--line); border-radius:6px; font-size:16px; background:transparent; color:inherit; font-family:inherit; }
+  .zoom-row { display:flex; align-items:center; gap:10px; }
+  .zoom-row input { flex:1; }
+  .btns { display:flex; gap:10px; margin-top:16px; flex-wrap:wrap; }
+  button { flex:1; min-width:130px; padding:13px; border:0; border-radius:6px; color:#fff; font-size:16px; font-weight:bold; font-family:inherit; cursor:pointer; background:var(--blue); }
+  button.pdf { background:var(--green); }
+  button.reset { background:var(--grey); }
+  button:disabled { opacity:.5; cursor:not-allowed; }
+  button:focus-visible, input:focus-visible { outline:3px solid #f5a623; outline-offset:2px; }
+  .stage { margin-top:16px; text-align:center; }
+  canvas { width:100%; height:auto; border:1px solid var(--line); border-radius:6px; touch-action:none; cursor:grab; background:#fff; }
+  canvas.dragging { cursor:grabbing; }
+  .note { font-size:13px; color:var(--muted); margin-top:6px; }
+  .warn { margin-top:8px; padding:8px 10px; border-radius:6px; background:#fff3cd; color:#5c4400; font-size:13px; }
+  .error { margin-top:8px; padding:8px 10px; border-radius:6px; background:#fde2e2; color:#7a1212; font-size:13px; }
+  [hidden] { display:none !important; }
+  @media (max-width:480px) { button { width:100%; } }
+</style>
 </head>
 <body>
+<div class="container" id="container">
+  <h2>Javidnam Poster Maker</h2>
 
-<div class="container">
-    <h2>Javidnam Poster Maker</h2>
-    
-    <div class="form-group">
-        <label>Javidnam Portrait Image (Upload or Drag & Drop):</label>
-        <input type="file" id="imageInput" accept="image/*">
-    </div>
-    
-    <div class="form-group">
-        <label>Javidnam Full Name:</label>
-        <input type="text" id="nameInput" placeholder="Full Name">
-    </div>
+  <label for="imageInput">Portrait image (choose a file or drag &amp; drop anywhere on the page)</label>
+  <input type="file" id="imageInput" accept="image/*">
+  <div class="warn" id="lowRes" hidden>This image has a low resolution and may look blurry in a large print. Use a larger version if you have one.</div>
 
-    <div class="btn-group">
-        <button onclick="downloadJPG()">Download JPG</button>
-        <button class="pdf-btn" onclick="downloadPDF()">Download Print PDF</button>
-        <button class="reset-btn" onclick="resetForm()">Reset</button>
-    </div>
+  <label for="nameInput">Full name</label>
+  <input type="text" id="nameInput" placeholder="Full Name" dir="auto">
 
-    <h3>Live Preview</h3>
-    <div class="canvas-container">
-        <canvas id="posterCanvas"></canvas>
-    </div>
-    <div class="hint">You can drag the preview image to adjust the portrait position.</div>
+  <label for="zoomInput">Photo zoom</label>
+  <div class="zoom-row">
+    <input type="range" id="zoomInput" min="1" max="3" step="0.01" value="1" disabled>
+    <span id="zoomLabel">100%</span>
+  </div>
+
+  <div class="btns">
+    <button id="jpgBtn" disabled>Download JPG</button>
+    <button id="pdfBtn" class="pdf" disabled>Download print PDF</button>
+    <button id="resetBtn" class="reset">Reset</button>
+  </div>
+  <div class="error" id="errorBox" hidden></div>
+
+  <div class="stage">
+    <canvas id="posterCanvas" aria-label="Poster preview"></canvas>
+    <div class="note">Drag the photo in the preview to reposition it. Use the slider or mouse wheel to zoom.</div>
+  </div>
 </div>
 
 <script>
-    const canvas = document.getElementById('posterCanvas');
-    const ctx = canvas.getContext('2d');
+/* ---------- Settings (coordinates are on the full-size template canvas) ---------- */
+const CONFIG = {
+  templateSrc: 'Template.jpg',
+  photoBox: { w: 3600, h: 3200, y: 1150 },      // photo box; x is centered automatically
+  nameZone: { top: 4350, bottom: 5075 },        // empty zone between the photo and the red line
+  nameMaxWidth: 3400,
+  nameMaxSize: 340,
+  nameMinSize: 140,
+  nameColor: '#111111',
+  latinFont: '"Archivo Black", "Arial Black", Impact, sans-serif',
+  persianFont: '"Vazirmatn", Tahoma, sans-serif',
+  previewWidth: 900,                            // preview canvas width in px
+  maxExportPixels: 16000000,                    // safe pixel limit for iOS Safari
+  lowResRatio: 0.5                              // warn if image width is below this fraction of the photo box
+};
 
-    const posterTemplate = new Image();
-    posterTemplate.src = 'Template.jpg';
+const $ = id => document.getElementById(id);
+const canvas = $('posterCanvas'), ctx = canvas.getContext('2d');
+const nameInput = $('nameInput'), zoomInput = $('zoomInput');
 
-    let userImage = null;
-    let panX = 0;
-    let panY = 0;
-    let isDragging = false;
-    let startX = 0;
-    let startY = 0;
+const template = new Image();
+let templateReady = false;
+let userImage = null, imageURL = null;
+let zoom = 1, panX = 0, panY = 0;
+let previewScale = 0.2;
 
-    posterTemplate.onload = () => {
-        canvas.width = posterTemplate.naturalWidth;
-        canvas.height = posterTemplate.naturalHeight;
-        drawPoster();
-    };
+/* ---------- Template loading ---------- */
+template.onload = async () => {
+  templateReady = true;
+  previewScale = CONFIG.previewWidth / template.naturalWidth;
+  canvas.width = Math.round(template.naturalWidth * previewScale);
+  canvas.height = Math.round(template.naturalHeight * previewScale);
+  await loadFonts();
+  $('jpgBtn').disabled = $('pdfBtn').disabled = false;
+  redraw();
+};
+template.onerror = () => showError('Template.jpg could not be loaded. Make sure it is in the same folder as this HTML file and that the page is opened from a server or host, not via file://.');
+template.src = CONFIG.templateSrc;
 
-    function handleFile(file) {
-        if (file && file.type.startsWith('image/')) {
-            const reader = new FileReader();
-            reader.onload = function(event) {
-                userImage = new Image();
-                userImage.onload = function() {
-                    panX = 0;
-                    panY = 0;
-                    drawPoster();
-                };
-                userImage.src = event.target.result;
-            };
-            reader.readAsDataURL(file);
-        }
-    }
+async function loadFonts() {
+  try {
+    await Promise.all([
+      document.fonts.load('900 300px "Archivo Black"'),
+      document.fonts.load('900 300px "Vazirmatn"', '\u0633\u0644\u0627\u0645')
+    ]);
+  } catch (e) { /* fall back to system fonts */ }
+}
 
-    document.getElementById('imageInput').addEventListener('change', (e) => handleFile(e.target.files[0]));
+function showError(msg) { const b = $('errorBox'); b.textContent = msg; b.hidden = !msg; }
 
-    const container = document.querySelector('.container');
-    container.addEventListener('dragover', (e) => e.preventDefault());
-    container.addEventListener('drop', (e) => {
-        e.preventDefault();
-        if (e.dataTransfer.files.length) {
-            handleFile(e.dataTransfer.files[0]);
-        }
-    });
+/* ---------- User photo ---------- */
+function handleFile(file) {
+  if (!file || !file.type.startsWith('image/')) return;
+  if (imageURL) URL.revokeObjectURL(imageURL);
+  imageURL = URL.createObjectURL(file);
+  const img = new Image();
+  img.onload = () => {
+    userImage = img; zoom = 1; panX = panY = 0;
+    zoomInput.value = 1; zoomInput.disabled = false; updateZoomLabel();
+    $('lowRes').hidden = img.naturalWidth >= CONFIG.photoBox.w * CONFIG.lowResRatio;
+    redraw();
+  };
+  img.onerror = () => showError('This file could not be read as an image.');
+  img.src = imageURL;
+}
+$('imageInput').addEventListener('change', e => handleFile(e.target.files[0]));
 
-    document.getElementById('nameInput').addEventListener('input', drawPoster);
+const container = $('container');
+['dragenter', 'dragover'].forEach(t => container.addEventListener(t, e => { e.preventDefault(); container.classList.add('dragover'); }));
+['dragleave', 'drop'].forEach(t => container.addEventListener(t, e => { e.preventDefault(); container.classList.remove('dragover'); }));
+container.addEventListener('drop', e => { if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]); });
 
-    function getCanvasCoordinates(e) {
-        const rect = canvas.getBoundingClientRect();
-        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-        const scale = canvas.width / rect.width;
-        return {
-            x: (clientX - rect.left) * scale,
-            y: (clientY - rect.top) * scale
-        };
-    }
+nameInput.addEventListener('input', redraw);
 
-    function startDrag(e) {
-        if (!userImage) return;
-        isDragging = true;
-        const pos = getCanvasCoordinates(e);
-        startX = pos.x - panX;
-        startY = pos.y - panY;
-    }
+/* ---------- Zoom and pan ---------- */
+function updateZoomLabel() { $('zoomLabel').textContent = Math.round(zoom * 100) + '%'; }
+function setZoom(z) {
+  zoom = Math.min(3, Math.max(1, z));
+  zoomInput.value = zoom; updateZoomLabel();
+  clampPan(); redraw();
+}
+zoomInput.addEventListener('input', () => setZoom(parseFloat(zoomInput.value)));
+canvas.addEventListener('wheel', e => {
+  if (!userImage) return;
+  e.preventDefault();
+  setZoom(zoom * (e.deltaY < 0 ? 1.06 : 1 / 1.06));
+}, { passive: false });
 
-    function drag(e) {
-        if (!isDragging || !userImage) return;
-        e.preventDefault();
-        const pos = getCanvasCoordinates(e);
-        panX = pos.x - startX;
-        panY = pos.y - startY;
-        drawPoster();
-    }
+function imageSize() {
+  const { w, h } = CONFIG.photoBox;
+  const r = userImage.naturalWidth / userImage.naturalHeight;
+  const base = r > w / h ? { w: h * r, h } : { w, h: w / r };
+  return { w: base.w * zoom, h: base.h * zoom };
+}
+function clampPan() {
+  if (!userImage) return;
+  const { w, h } = CONFIG.photoBox, s = imageSize();
+  const maxX = (s.w - w) / 2, maxY = (s.h - h) / 2;
+  panX = Math.min(maxX, Math.max(-maxX, panX));
+  panY = Math.min(maxY, Math.max(-maxY, panY));
+}
 
-    function stopDrag() {
-        isDragging = false;
-    }
+let drag = null;
+function toDesign(e) {
+  const rect = canvas.getBoundingClientRect();
+  const k = template.naturalWidth / rect.width;
+  return { x: (e.clientX - rect.left) * k, y: (e.clientY - rect.top) * k };
+}
+canvas.addEventListener('pointerdown', e => {
+  if (!userImage) return;
+  canvas.setPointerCapture(e.pointerId);
+  const p = toDesign(e);
+  drag = { sx: p.x - panX, sy: p.y - panY };
+  canvas.classList.add('dragging');
+});
+canvas.addEventListener('pointermove', e => {
+  if (!drag) return;
+  const p = toDesign(e);
+  panX = p.x - drag.sx; panY = p.y - drag.sy;
+  clampPan(); redraw();
+});
+const endDrag = () => { drag = null; canvas.classList.remove('dragging'); };
+canvas.addEventListener('pointerup', endDrag);
+canvas.addEventListener('pointercancel', endDrag);
 
-    canvas.addEventListener('mousedown', startDrag);
-    canvas.addEventListener('mousemove', drag);
-    window.addEventListener('mouseup', stopDrag);
+/* ---------- Drawing ---------- */
+let raf = 0;
+function redraw() {
+  if (!templateReady) return;
+  cancelAnimationFrame(raf);
+  raf = requestAnimationFrame(() => render(ctx, previewScale));
+}
 
-    canvas.addEventListener('touchstart', startDrag, { passive: false });
-    canvas.addEventListener('touchmove', drag, { passive: false });
-    window.addEventListener('touchend', stopDrag);
+function isPersian(t) { return /[\u0600-\u06FF]/.test(t); }
 
-    function drawPoster() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        
-        if (posterTemplate.complete) {
-            ctx.drawImage(posterTemplate, 0, 0);
-        }
+// choose the line break that makes both lines closest in width
+function splitName(c, words) {
+  let best = 1, bestDiff = Infinity;
+  for (let i = 1; i < words.length; i++) {
+    const d = Math.abs(c.measureText(words.slice(0, i).join(' ')).width - c.measureText(words.slice(i).join(' ')).width);
+    if (d < bestDiff) { bestDiff = d; best = i; }
+  }
+  return [words.slice(0, best).join(' '), words.slice(best).join(' ')];
+}
 
-        if (userImage) {
-            ctx.save();
-            const boxW = 3600;
-            const boxH = 3200; // ارتفاع استاندارد برای ایجاد فاصله متناسب با الگو
-            const boxX = (canvas.width - boxW) / 2;
-            const boxY = 1150;
+function drawName(c, W) {
+  const text = nameInput.value.trim().replace(/\s+/g, ' ');
+  if (!text) return;
+  const fa = isPersian(text);
+  const fam = fa ? CONFIG.persianFont : CONFIG.latinFont;
+  const fontAt = s => `900 ${s}px ${fam}`;
+  const words = text.split(' ');
 
-            ctx.beginPath();
-            ctx.rect(boxX, boxY, boxW, boxH);
-            ctx.clip();
+  c.fillStyle = CONFIG.nameColor;
+  c.textAlign = 'center';
+  c.textBaseline = 'alphabetic';
+  c.direction = fa ? 'rtl' : 'ltr';
 
-            const imgRatio = userImage.naturalWidth / userImage.naturalHeight;
-            const boxRatio = boxW / boxH;
+  c.font = fontAt(CONFIG.nameMaxSize);
+  const lines = words.length > 1 ? splitName(c, words) : [text];
 
-            let renderW, renderH;
-            if (imgRatio > boxRatio) {
-                renderH = boxH;
-                renderW = boxH * imgRatio;
-            } else {
-                renderW = boxW;
-                renderH = boxW / imgRatio;
-            }
+  let size = CONFIG.nameMaxSize;
+  while (size > CONFIG.nameMinSize) {
+    c.font = fontAt(size);
+    if (Math.max(...lines.map(l => c.measureText(l).width)) <= CONFIG.nameMaxWidth) break;
+    size -= 5;
+  }
+  c.font = fontAt(size);
 
-            let drawX = boxX + (boxW - renderW) / 2 + panX;
-            let drawY = boxY + (boxH - renderH) / 2 + panY;
+  const { top, bottom } = CONFIG.nameZone;
+  const capH = size * (fa ? 0.62 : 0.72), gap = size * 0.18;
+  const blockH = capH * lines.length + gap * (lines.length - 1);
+  let y = top + (bottom - top - blockH) / 2 + capH;
+  lines.forEach(l => { c.fillText(l, W / 2, y); y += capH + gap; });
+}
 
-            if (renderW > boxW) {
-                const minX = boxX + boxW - renderW;
-                const maxX = boxX;
-                if (drawX < minX) drawX = minX;
-                if (drawX > maxX) drawX = maxX;
-            } else {
-                drawX = boxX;
-            }
+function render(c, scale) {
+  const W = template.naturalWidth, H = template.naturalHeight;
+  c.setTransform(1, 0, 0, 1, 0, 0);
+  c.clearRect(0, 0, c.canvas.width, c.canvas.height);
+  c.setTransform(scale, 0, 0, scale, 0, 0);
+  c.drawImage(template, 0, 0, W, H);
 
-            if (renderH > boxH) {
-                const minY = boxY + boxH - renderH;
-                const maxY = boxY;
-                if (drawY < minY) drawY = minY;
-                if (drawY > maxY) drawY = maxY;
-            } else {
-                drawY = boxY;
-            }
+  if (userImage) {
+    const { w: bw, h: bh, y: by } = CONFIG.photoBox, bx = (W - bw) / 2;
+    const s = imageSize();
+    c.save();
+    c.beginPath(); c.rect(bx, by, bw, bh); c.clip();
+    c.imageSmoothingQuality = 'high';
+    c.drawImage(userImage, bx + (bw - s.w) / 2 + panX, by + (bh - s.h) / 2 + panY, s.w, s.h);
+    c.restore();
+  }
+  drawName(c, W);
+}
 
-            ctx.drawImage(userImage, drawX, drawY, renderW, renderH);
-            ctx.restore();
-        }
+/* ---------- Export ---------- */
+function renderFull() {
+  const W = template.naturalWidth, H = template.naturalHeight;
+  const k = Math.min(1, Math.sqrt(CONFIG.maxExportPixels / (W * H)));
+  const off = document.createElement('canvas');
+  off.width = Math.round(W * k); off.height = Math.round(H * k);
+  render(off.getContext('2d'), k);
+  return off;
+}
+function fileBase() {
+  const n = nameInput.value.trim().replace(/[\\/:*?"<>|]+/g, '').replace(/\s+/g, '-');
+  return 'poster-' + (n || 'javidnam');
+}
 
-        // تنظیم دقیق و مهارشده دو‌سطری مشابه الگوی ارسالی
-        const nameText = document.getElementById('nameInput').value.trim();
-        if (nameText) {
-            ctx.fillStyle = '#111111';
-            ctx.textAlign = 'center';
+$('jpgBtn').addEventListener('click', () => {
+  showError('');
+  try {
+    renderFull().toBlob(b => {
+      if (!b) return showError('Could not create the file. Please try again.');
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(b);
+      a.download = fileBase() + '.jpg';
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+    }, 'image/jpeg', 0.95);
+  } catch (e) { showError('JPG export failed: ' + e.message); }
+});
 
-            const maxWidth = 3400;
-            const words = nameText.split(' ');
+$('pdfBtn').addEventListener('click', () => {
+  showError('');
+  if (!window.jspdf) return showError('The PDF library did not load. Check your internet connection.');
+  try {
+    const off = renderFull();
+    const pdf = new window.jspdf.jsPDF({ unit: 'mm', format: 'a3', orientation: 'portrait' });
+    const pw = pdf.internal.pageSize.getWidth(), ph = pdf.internal.pageSize.getHeight();
+    let w = pw, h = pw * off.height / off.width;
+    if (h > ph) { h = ph; w = ph * off.width / off.height; }
+    pdf.addImage(off.toDataURL('image/jpeg', 0.95), 'JPEG', (pw - w) / 2, (ph - h) / 2, w, h, undefined, 'FAST');
+    pdf.save(fileBase() + '.pdf');
+  } catch (e) { showError('PDF export failed: ' + e.message); }
+});
 
-            function getOptimalFontSize(text, startSize = 340) {
-                let size = startSize;
-                do {
-                    ctx.font = `900 ${size}px "Arial Black", Impact, sans-serif`;
-                    if (ctx.measureText(text).width <= maxWidth || size <= 140) {
-                        break;
-                    }
-                    size -= 5;
-                } while (size > 140);
-                return size;
-            }
-
-            if (words.length > 1) {
-                const mid = Math.ceil(words.length / 2);
-                const line1 = words.slice(0, mid).join(' ');
-                const line2 = words.slice(mid).join(' ');
-
-                const font1 = getOptimalFontSize(line1, 340);
-                const font2 = getOptimalFontSize(line2, 340);
-                const sharedFont = Math.min(font1, font2);
-
-                ctx.font = `900 ${sharedFont}px "Arial Black", Impact, sans-serif`;
-                
-                // مختصات دقیقاً تنظیم شده بر اساس الگوی نهایی تایید شده
-                ctx.fillText(line1, canvas.width / 2, 4650);
-                ctx.fillText(line2, canvas.width / 2, 5000);
-            } else {
-                const singleFont = getOptimalFontSize(nameText, 380);
-                ctx.font = `900 ${singleFont}px "Arial Black", Impact, sans-serif`;
-                ctx.fillText(nameText, canvas.width / 2, 4820);
-            }
-        }
-    }
-
-    function downloadJPG() {
-        const link = document.createElement('a');
-        link.download = 'poster.jpg';
-        link.href = canvas.toDataURL('image/jpeg', 0.9);
-        link.click();
-    }
-
-    function downloadPDF() {
-        const { jsPDF } = window.jspdf;
-        const pdf = new jsPDF({
-            orientation: canvas.width > canvas.height ? 'landscape' : 'portrait',
-            unit: 'px',
-            format: [canvas.width, canvas.height]
-        });
-        
-        const imgData = canvas.toDataURL('image/jpeg', 0.9);
-        pdf.addImage(imgData, 'JPEG', 0, 0, canvas.width, canvas.height);
-        pdf.save('poster.pdf');
-    }
-
-    function resetForm() {
-        userImage = null;
-        panX = 0;
-        panY = 0;
-        document.getElementById('imageInput').value = '';
-        document.getElementById('nameInput').value = '';
-        drawPoster();
-    }
+$('resetBtn').addEventListener('click', () => {
+  if (imageURL) URL.revokeObjectURL(imageURL);
+  imageURL = userImage = null;
+  zoom = 1; panX = panY = 0;
+  zoomInput.value = 1; zoomInput.disabled = true; updateZoomLabel();
+  $('imageInput').value = ''; nameInput.value = '';
+  $('lowRes').hidden = true; showError('');
+  redraw();
+});
 </script>
-
 </body>
 </html>
