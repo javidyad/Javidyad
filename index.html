@@ -64,6 +64,8 @@
   select { padding:8px 12px; border:1px solid var(--line); border-radius:8px; font:inherit; font-size:16px; background:transparent; color:inherit; }
   select option { color:#161616; }
   .privacy, .note { font-size:13px; color:var(--muted); margin-top:6px; line-height:1.7; }
+  .source { margin:18px 0 0; padding-top:12px; border-top:1px solid var(--line); font-size:13px; color:var(--muted); line-height:1.7; text-align:center; }
+  .source a { color:var(--primary); font-weight:700; }
 
   .stage { margin-top:14px; }
   canvas { display:block; width:100%; max-width:100%; margin:0 auto; height:auto; border:1px solid var(--line); border-radius:6px; background:#fff; touch-action:none; cursor:grab; transition:max-width .25s; }
@@ -146,6 +148,7 @@
     <button id="againBtn" class="alt" data-i18n="again"></button>
   </div>
   <div class="error" id="errorBox" hidden></div>
+  <p class="source"><span data-i18n="sourceNote"></span> <a href="https://github.com/javidyad/poster-generator" target="_blank" rel="noopener noreferrer" data-i18n="sourceLink"></a></p>
 </div>
 
 <div class="modal" id="modal" role="dialog" aria-modal="true" hidden>
@@ -186,7 +189,9 @@ const STR = {
     imgFail: 'This file could not be read as an image.',
     jpgFail: 'JPG export failed: ',
     pdfLib: 'The PDF library did not load. Check your internet connection.',
-    pdfFail: 'PDF export failed: '
+    pdfFail: 'PDF export failed: ',
+    sourceNote: 'The code of this site is public, so anyone can check that photos never leave the device.',
+    sourceLink: 'View the code on GitHub'
   },
   fa: {
     title: 'پوستر‌ساز جاویدنام',
@@ -210,7 +215,9 @@ const STR = {
     imgFail: 'این فایل به‌عنوان عکس خوانده نشد.',
     jpgFail: 'خطا در ساخت JPG: ',
     pdfLib: 'کتابخانه‌ی PDF بارگذاری نشد. اتصال اینترنت را بررسی کنید.',
-    pdfFail: 'خطا در ساخت PDF: '
+    pdfFail: 'خطا در ساخت PDF: ',
+    sourceNote: 'کد این سایت عمومی است تا هر کسی بتواند بررسی کند که عکس‌ها از دستگاه خارج نمی‌شوند.',
+    sourceLink: 'دیدن کد در گیت‌هاب'
   }
 };
 let lang = 'en', lastError = null;
