@@ -403,7 +403,9 @@ let hasList = false, chosen = null;
 function renderChosen() {
   $('chosen').hidden = !chosen;
   $('fromList').hidden = $('orLine').hidden = !hasList || !!chosen;
-  if (chosen) $('chosenText').textContent = `${t('chosen')} ${lang === 'fa' ? chosen.name_fa : chosen.name} (${lang === 'fa' ? chosen.city_fa : chosen.city})`;
+  if (!chosen) return;
+  const where = lang === 'fa' ? chosen.city_fa : chosen.city;
+  $('chosenText').textContent = `${t('chosen')} ${lang === 'fa' ? chosen.name_fa : chosen.name}` + (where ? ` (${where})` : '');
 }
 function setChosen(p) {
   chosen = p; renderChosen();

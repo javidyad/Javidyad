@@ -5,17 +5,18 @@ and these five columns, in this order. The first row is a header and is skipped.
 
     1. name on the poster, English letters only (A-Z a-z space . ' ’ -), max 40
     2. name in Persian
-    3. city in English
+    3. city in English  (leave 3 and 4 both empty when the city is not known)
     4. city in Persian
     5. photo file name (found in --photos, case-insensitive; extension optional)
 
 Every problem in the sheet is reported at once, and nothing is written until the
-sheet is clean. Photos are re-encoded, which also strips EXIF (location, camera).
+sheet is clean. The owner's rule: a photo smaller than MIN_SIDE px on either side
+is not used at all, since it would print blurry. Photos are re-encoded, which also strips EXIF (location, camera).
 
     python tools/build_javidnam.py --csv people.csv --photos originals/ --out javidnam/
 
 Writes:
-    javidnam/people.json          [{id, name, name_fa, city, city_fa}, ...] in sheet order
+    javidnam/people.json          [{id, name, name_fa, city, city_fa}, ...] in sheet order; city is null when unknown
     javidnam/photos/<id>.jpg      long side at most FULL_MAX px, for the poster
     javidnam/thumbs/<id>.jpg      THUMB_W x THUMB_H crop, for the list page
 """
@@ -31,7 +32,7 @@ from PIL import Image, ImageOps
 FULL_MAX = 3200          # the photo box is about 3100 px wide in a 16 MP export
 THUMB_W, THUMB_H = 360, 480
 FOCUS_Y = 0.3            # same framing as CONFIG.focusY in index.html: keep faces in the crop
-LOW_RES_W = 1933         # index.html warns below photoBox.w * lowResRatio (3866 * 0.5)
+MIN_SIDE = 1000          # the owner's quality rule
 NAME_RE = re.compile(r"^[A-Za-z .'’-]{1,40}$")
 IMAGE_EXT = {".jpg", ".jpeg", ".png", ".webp", ".heic", ".tif", ".tiff", ".bmp"}
 
@@ -72,9 +73,11 @@ def main():
         where = f"row {line}"
         if not NAME_RE.match(name):
             errors.append(f"{where}: English name {name!r} must be 1-40 English letters (space . ' ’ - allowed)")
-        for label, value in (("Persian name", name_fa), ("English city", city), ("Persian city", city_fa), ("photo", photo)):
+        for label, value in (("Persian name", name_fa), ("photo", photo)):
             if not value:
                 errors.append(f"{where}: {label} is empty")
+        if bool(city) != bool(city_fa):
+            errors.append(f"{where}: give the city in both English and Persian, or leave both empty")
         if city and city_fa:
             if city_fa_of.setdefault(city, city_fa) != city_fa:
                 errors.append(f"{where}: city {city!r} is written {city_fa!r} here but {city_fa_of[city]!r} earlier")
@@ -84,6 +87,11 @@ def main():
         src = find_photo(photos, photo) if photo else None
         if photo and not src:
             errors.append(f"{where}: photo {photo!r} not found in {args.photos}")
+        elif src:
+            with Image.open(src) as im:
+                w, h = ImageOps.exif_transpose(im).size
+            if min(w, h) < MIN_SIDE:
+                errors.append(f"{where}: photo {src.name} is {w} x {h}; both sides must be at least {MIN_SIDE} px")
         people.append({"line": line, "name": " ".join(name.split()), "name_fa": name_fa, "city": city, "city_fa": city_fa, "src": src})
 
     # the same city written two ways in English ("Tehran" / "tehran ") would become two groups
@@ -105,8 +113,6 @@ def main():
         pid = slugify(p["name"], taken)
         with Image.open(p["src"]) as im:
             im = ImageOps.exif_transpose(im).convert("RGB")
-            if im.width < LOW_RES_W:
-                warnings.append(f"row {p['line']}: {p['src'].name} is only {im.width} px wide and may print blurry")
             full = im.copy()
             full.thumbnail((FULL_MAX, FULL_MAX), Image.LANCZOS)
             full.save(args.out / "photos" / f"{pid}.jpg", quality=86, optimize=True, progressive=True)
@@ -115,7 +121,7 @@ def main():
             th = im.resize((w, h), Image.LANCZOS)
             x, y = (w - THUMB_W) // 2, round((h - THUMB_H) * FOCUS_Y)
             th.crop((x, y, x + THUMB_W, y + THUMB_H)).save(args.out / "thumbs" / f"{pid}.jpg", quality=80, optimize=True, progressive=True)
-        out.append({"id": pid, "name": p["name"], "name_fa": p["name_fa"], "city": p["city"], "city_fa": p["city_fa"]})
+        out.append({"id": pid, "name": p["name"], "name_fa": p["name_fa"], "city": p["city"] or None, "city_fa": p["city_fa"] or None})
 
     # remove files of people who are no longer in the sheet
     for d in ("photos", "thumbs"):

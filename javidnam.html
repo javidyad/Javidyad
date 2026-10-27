@@ -45,7 +45,10 @@
 
   .filters { position:sticky; top:0; z-index:2; margin:0 -18px; padding:10px 18px; background:var(--paper); border-bottom:1px solid var(--line); }
   input[type=search] { width:100%; padding:11px 12px; border:1px solid var(--line); border-radius:8px; font:inherit; font-size:16px; background:transparent; color:inherit; }
-  .chips { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
+  .cityrow { display:flex; align-items:center; gap:8px; margin-top:10px; }
+  .cityrow select { flex:none; max-width:46%; padding:7px 10px; border:1.5px solid var(--primary); border-radius:999px; font:inherit; font-size:14px; font-weight:700; background:transparent; color:var(--primary); }
+  .cityrow select option { color:#161616; font-weight:400; }
+  .chips { display:flex; flex-wrap:wrap; gap:8px; flex:1; min-width:0; }
   @media (max-width:600px) {
     /* one row that scrolls sideways, so the sticky bar stays short on phones */
     .chips { flex-wrap:nowrap; overflow-x:auto; scrollbar-width:none; padding-bottom:2px; -webkit-mask-image:linear-gradient(to var(--end), #000 85%, transparent); mask-image:linear-gradient(to var(--end), #000 85%, transparent); }
@@ -69,6 +72,8 @@
   .card .latin { direction:ltr; font-size:12px; color:var(--muted); }
   body.fa .card .latin { text-align:right; }
   .card .go { margin-top:auto; padding-top:6px; font-size:13px; font-weight:700; color:var(--primary); }
+  .credit { margin:-4px 0 12px; font-size:12px; color:var(--muted); text-align:center; line-height:1.7; }
+  .credit a { color:var(--primary); }
   .status { margin:28px 0; text-align:center; color:var(--muted); line-height:1.8; }
   [hidden] { display:none !important; }
 </style>
@@ -86,10 +91,14 @@
     <li data-i18n="step2"></li>
     <li data-i18n="step3"></li>
   </ol>
+  <p class="credit"><span data-i18n="credit"></span> <a href="https://javidnaman.iranintl.com/" target="_blank" rel="noopener noreferrer" data-i18n="creditLink"></a></p>
 
   <div class="filters" id="filters" hidden>
     <input type="search" id="search" autocomplete="off" spellcheck="false" data-i18n-ph="searchPh" data-i18n-aria="searchPh">
-    <div class="chips" id="chips" role="group" data-i18n-aria="cityLabel"></div>
+    <div class="cityrow">
+      <select id="citySelect" data-i18n-aria="cityLabel"></select>
+      <div class="chips" id="chips" role="group" data-i18n-aria="bigCities"></div>
+    </div>
   </div>
   <div id="results"></div>
   <p class="status" id="status" data-i18n="loading"></p>
@@ -101,7 +110,9 @@ const STR = {
   en: {
     title: 'Choose a Javidnam', back: '← Back',
     step1: 'Pick a city or search', step2: 'Tap a photo', step3: 'The poster is ready to print',
-    searchPh: 'Search by name', cityLabel: 'Filter by city', all: 'All',
+    searchPh: 'Search by name', cityLabel: 'Choose a city', bigCities: 'Cities with the most names', all: 'All', allCities: 'All cities',
+    unknownCity: 'City not recorded',
+    credit: 'Names and photos from', creditLink: 'Iran International’s Javidnaman platform',
     people: n => n === 1 ? '1 person' : `${n} people`, make: 'Make poster →',
     loading: 'Loading the list…', empty: 'The list is being prepared. You can still make a poster with your own photo.',
     noMatch: 'No name matches your search.', failed: 'The list could not be loaded. Check your connection and reload the page.',
@@ -110,7 +121,9 @@ const STR = {
   fa: {
     title: 'فهرست جاویدنامان', back: '→ بازگشت به پوستر‌ساز',
     step1: 'شهر را انتخاب یا نام را جستجو کنید', step2: 'روی عکس بزنید', step3: 'پوستر آماده‌ی چاپ است',
-    searchPh: 'جستجوی نام', cityLabel: 'انتخاب شهر', all: 'همه',
+    searchPh: 'جستجوی نام', cityLabel: 'انتخاب شهر', bigCities: 'شهرهای با بیشترین نام', all: 'همه', allCities: 'همه‌ی شهرها',
+    unknownCity: 'شهر ثبت نشده',
+    credit: 'نام‌ها و عکس‌ها برگرفته از', creditLink: 'پلتفرم جاویدنامان ایران اینترنشنال',
     people: n => `${n.toLocaleString('fa')} نفر`, make: 'ساخت پوستر ←',
     loading: 'در حال بارگذاری فهرست…', empty: 'فهرست در حال آماده شدن است. همچنان می‌توانید با عکس خودتان پوستر بسازید.',
     noMatch: 'نامی با این جستجو پیدا نشد.', failed: 'فهرست بارگذاری نشد. اتصال اینترنت را بررسی کنید و صفحه را دوباره باز کنید.',
@@ -139,21 +152,34 @@ function el(tag, props, ...kids) {
 }
 const count = n => el('span', { className: 'n', textContent: t('people')(n) });
 
+const UNKNOWN = '?', TOP_CITIES = 6;
+const keyOf = p => p.city || UNKNOWN;
+// every city with its count, alphabetical, "city not recorded" last
 function cities() {
   const m = new Map();
-  people.forEach(p => m.set(p.city, (m.get(p.city) || 0) + 1));
-  return [...m].map(([key, n]) => ({ key, n, label: cityOf(people.find(p => p.city === key)) }))
-    .sort((a, b) => a.label.localeCompare(b.label, lang));
+  people.forEach(p => m.set(keyOf(p), (m.get(keyOf(p)) || 0) + 1));
+  return [...m].map(([key, n]) => ({ key, n, label: key === UNKNOWN ? t('unknownCity') : cityOf(people.find(p => keyOf(p) === key)) }))
+    .sort((a, b) => (a.key === UNKNOWN) - (b.key === UNKNOWN) || a.label.localeCompare(b.label, lang));
 }
+const bySize = list => [...list].sort((a, b) => (a.key === UNKNOWN) - (b.key === UNKNOWN) || b.n - a.n);
+function setCity(key) { city = key; renderChips(); renderResults(); }
 
+// a dropdown with every city, plus buttons for the biggest ones (and the chosen one)
 function renderChips() {
+  const all = cities(), num = n => n.toLocaleString(lang);
+  const sel = $('citySelect');
+  sel.replaceChildren(el('option', { value: '', textContent: `${t('allCities')} (${num(people.length)})` }),
+    ...all.map(c => el('option', { value: c.key, textContent: `${c.label} (${num(c.n)})` })));
+  sel.value = city;
+  const top = bySize(all.filter(c => c.key !== UNKNOWN)).slice(0, TOP_CITIES).map(c => c.key);
   const chip = (key, label, n) => {
-    const b = el('button', { type: 'button', className: 'chip' }, label, el('span', { className: 'n', textContent: n.toLocaleString(lang) }));
+    const b = el('button', { type: 'button', className: 'chip' }, label, el('span', { className: 'n', textContent: num(n) }));
     b.setAttribute('aria-pressed', String(city === key));
-    b.addEventListener('click', () => { city = key; renderChips(); renderResults(); });
+    b.addEventListener('click', () => setCity(key));
     return b;
   };
-  $('chips').replaceChildren(chip('', t('all'), people.length), ...cities().map(c => chip(c.key, c.label, c.n)));
+  $('chips').replaceChildren(chip('', t('all'), people.length),
+    ...bySize(all.filter(c => top.includes(c.key) || c.key === city)).map(c => chip(c.key, c.label, c.n)));
   const on = $('chips').querySelector('[aria-pressed=true]');
   if (on) on.scrollIntoView({ block: 'nearest', inline: 'nearest' });
 }
@@ -169,8 +195,9 @@ function card(p) {
 
 function renderResults() {
   const q = fold($('search').value);
-  const match = people.filter(p => (!city || p.city === city) && (!q || fold(p.name).includes(q) || fold(p.name_fa).includes(q)));
-  const groups = cities().map(c => ({ ...c, list: match.filter(p => p.city === c.key) })).filter(g => g.list.length);
+  const match = people.filter(p => (!city || keyOf(p) === city) && (!q || fold(p.name).includes(q) || fold(p.name_fa).includes(q)));
+  // biggest cities first, as in the buttons
+  const groups = bySize(cities()).map(c => ({ ...c, list: match.filter(p => keyOf(p) === c.key) })).filter(g => g.list.length);
   $('results').replaceChildren(...groups.map(g =>
     el('section', { className: 'group' }, el('h3', {}, g.label, count(g.list.length)), el('div', { className: 'grid' }, ...g.list.map(card)))));
   $('status').hidden = match.length > 0;
@@ -199,6 +226,7 @@ function applyLang(l) {
 }
 $('langBtn').addEventListener('click', () => applyLang(lang === 'fa' ? 'en' : 'fa'));
 $('search').addEventListener('input', () => { if (people) renderResults(); });
+$('citySelect').addEventListener('change', e => setCity(e.target.value));
 applyLang(lang);
 
 fetch('javidnam/people.json', { cache: 'no-cache' })
