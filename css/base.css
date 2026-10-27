@@ -14,6 +14,9 @@ body.fa { font-family:Vazirmatn, Tahoma, sans-serif; }
 .container { max-width:560px; margin:0 auto; padding:18px; background:var(--paper); border-radius:12px; box-shadow:0 2px 14px rgba(0,0,0,.1); }
 h2 { margin:6px 0 14px; text-align:center; font:400 26px/1.3 "Archivo Black", Impact, sans-serif; }
 body.fa h2 { font:700 24px/1.5 Vazirmatn, Tahoma, sans-serif; }
+/* the tagline under the name, in the reading font rather than the display font */
+h2 .tagline { display:block; margin-top:4px; font:400 15px/1.6 "Segoe UI", Tahoma, Arial, sans-serif; color:var(--muted); }
+body.fa h2 .tagline, h2 .tagline:lang(fa) { font-family:Vazirmatn, Tahoma, sans-serif; }
 h2::after { content:""; display:block; margin-top:10px; height:5px; border-top:2px solid var(--gold); border-bottom:1px solid var(--gold); }
 .top { display:flex; align-items:center; justify-content:space-between; }
 .mini { height:38px; width:auto; }

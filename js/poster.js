@@ -1,10 +1,10 @@
 // Poster maker (index.html): template, photo, name, preview, export, and the Javidnam list hookup.
-import { $, params, urlLang, savedLang, translatePage } from './common.js?v=202610271421';
+import { $, params, urlLang, savedLang, translatePage } from './common.js?v=202610271429';
 
 /* ---------- Language ---------- */
 const STR = {
   en: {
-    title: 'Javidnam Poster Maker',
+    title: 'JavidYad', tagline: 'In memory of the Javidnaman', docTitle: 'JavidYad · In memory of the Javidnaman',
     pickMain: 'Choose a photo', pickChange: 'Photo selected. Tap to change it', pickSub: 'or drag and drop it here',
     privacy: 'Your photo is processed only on your device. It is never uploaded or sent anywhere.',
     lowRes: 'This image has a low resolution and may look blurry in a large print. Use a larger version if you have one.',
@@ -33,7 +33,7 @@ const STR = {
     sourceLink: 'View the code on GitHub'
   },
   fa: {
-    title: 'پوستر‌ساز جاویدنام',
+    title: 'جاویدیاد', tagline: 'به یاد جاویدنامان', docTitle: 'جاویدیاد · به یاد جاویدنامان',
     pickMain: 'انتخاب عکس', pickChange: 'عکس انتخاب شد. برای تغییر لمس کنید', pickSub: 'یا آن را اینجا بکشید و رها کنید',
     privacy: 'عکس شما فقط روی دستگاه خودتان پردازش می‌شود و به هیچ جا آپلود یا ارسال نمی‌شود.',
     lowRes: 'رزولوشن این عکس پایین است و در چاپ بزرگ کدر دیده می‌شود. اگر نسخه‌ی بزرگ‌تری دارید از آن استفاده کنید.',
