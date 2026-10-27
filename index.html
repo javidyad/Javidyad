@@ -87,7 +87,7 @@
   <div class="privacy" data-i18n="saveTip"></div>
   <div class="error" id="errorBox" hidden></div>
 
-  <div class="stage">
+  <div class="stage" id="stage" hidden>
     <canvas id="posterCanvas" data-i18n-aria="previewAria"></canvas>
     <div class="note" data-i18n="hint"></div>
   </div>
@@ -203,7 +203,6 @@ template.onload = async () => {
   canvas.width = Math.round(template.naturalWidth * previewScale);
   canvas.height = Math.round(template.naturalHeight * previewScale);
   await loadFonts();
-  ['saveBtn', 'jpgBtn', 'pdfBtn'].forEach(id => { $(id).disabled = false; });
   redraw();
 };
 template.onerror = () => showError('tplFail');
@@ -330,7 +329,14 @@ canvas.addEventListener('pointercancel', endPointer);
 
 /* ---------- Drawing ---------- */
 let raf = 0;
+// the preview and export buttons appear only once there is a photo or a name
+function updateState() {
+  const has = !!userImage || nameInput.value.trim() !== '';
+  $('stage').hidden = !has;
+  ['saveBtn', 'jpgBtn', 'pdfBtn'].forEach(id => { $(id).disabled = !(templateReady && has); });
+}
 function redraw() {
+  updateState();
   if (!templateReady) return;
   cancelAnimationFrame(raf);
   raf = requestAnimationFrame(() => render(ctx, previewScale));
