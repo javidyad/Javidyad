@@ -404,7 +404,7 @@ function renderChosen() {
   $('chosen').hidden = !chosen;
   $('fromList').hidden = $('orLine').hidden = !hasList || !!chosen;
   if (!chosen) return;
-  const where = lang === 'fa' ? chosen.city_fa : chosen.city;
+  const where = lang === 'fa' ? chosen.city_fa || chosen.province_fa : chosen.city || chosen.province;
   $('chosenText').textContent = `${t('chosen')} ${lang === 'fa' ? chosen.name_fa : chosen.name}` + (where ? ` (${where})` : '');
 }
 function setChosen(p) {
