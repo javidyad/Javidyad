@@ -1,5 +1,5 @@
 // Poster maker (index.html): template, photo, name, preview, export, and the Javidnam list hookup.
-import { $, params, urlLang, savedLang, translatePage } from './common.js?v=202610281656';
+import { $, params, urlLang, savedLang, translatePage } from './common.js?v=202610281701';
 
 /* ---------- Language ---------- */
 const STR = {
@@ -84,7 +84,7 @@ function applyLang(l) {
 function chooseLang(l) {
   applyLang(l);
   document.body.classList.remove('lang-pick');
-  $('langScreen').hidden = $('intro').hidden = true;
+  $('langScreen').hidden = $('intro').hidden = $('introBottom').hidden = true;
   $('container').hidden = false;
 }
 // the last used language (or the browser language) is highlighted; the screen is still shown every time

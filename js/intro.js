@@ -1,7 +1,7 @@
 // Language screen scene: Frankfurt at night, a crowd holding up placards of Javidnaman, a Lion and Sun flag.
 // Drawn as inline SVG, animated with CSS (css/poster.css, .intro-*). The placards show real people from
 // javidnam/people.json and change every few seconds. Nothing moves when the visitor asks for reduced motion.
-import { $, urlLang } from './common.js?v=202610281656';
+import { $, urlLang } from './common.js?v=202610281701';
 
 const W = 560, H = 300, HORIZON = 196;
 const NS = 'http://www.w3.org/2000/svg';
@@ -69,11 +69,19 @@ function flag(x, top, w, delay) {
   </g>`;
 }
 
-function build() {
-  // back row: small, dense; front row: bigger. [x, placard?] with the Prince in the middle of the front row
+// two arrangements, so the scenes above and below the language card do not look copied
+const LAYOUTS = [
+  { backCards: [36, 138, 240, 344, 448, 526], front: [[18], [74, 1], [128], [184, 1], [240], [286, 'prince'], [340], [392, 1], [446], [500, 1], [552]],
+    flags: [[98, 58, 46, 0.7, 'back'], [414, 50, 50, 1.4, 'back'], [212, 92, 64, 0, 'front'], [468, 96, 60, 1, 'front']] },
+  { backCards: [10, 112, 214, 318, 422, 500], front: [[22, 1], [76], [132, 1], [188], [244, 1], [298], [352, 1], [404], [458, 'prince'], [512], [552, 1]],
+    flags: [[176, 54, 48, 0.3, 'back'], [496, 62, 44, 1.1, 'back'], [56, 94, 60, 0.6, 'front'], [322, 88, 64, 1.6, 'front']] },
+];
+
+function build(layout) {
+  // back row: small, dense; front row: bigger. [x, placard?]
   const back = [10, 36, 60, 86, 112, 138, 162, 188, 214, 240, 266, 292, 318, 344, 370, 396, 422, 448, 474, 500, 526, 552];
-  const backCards = new Set([36, 138, 240, 344, 448, 526]);
-  const front = [[18], [74, 1], [128], [184, 1], [240], [286, 'prince'], [340], [392, 1], [446], [500, 1], [552]];
+  const backCards = new Set(layout.backCards), front = layout.front;
+  const flags = row => layout.flags.filter(f => f[4] === row).map(([x, top, w, delay]) => flag(x, top, w, delay)).join('');
   const backRow = back.map((x, i) => person(x, 246 + (i % 2) * 4, 0.6, backCards.has(x) && { delay: (i % 5) * 0.5 })).join('');
   const frontRow = front.map(([x, c], i) => person(x, 266 + (i % 3) * 3, 0.92, c && { delay: (i % 4) * 0.6 + 0.3, prince: c === 'prince' })).join('');
   return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMax slice" xmlns="${NS}">
@@ -87,23 +95,24 @@ function build() {
     <rect y="${HORIZON - 120}" width="${W}" height="140" fill="url(#intro-glow)"/>
     ${skyline()}
     <rect class="intro-river" y="${HORIZON}" width="${W}" height="${H - HORIZON}"/>
-    ${flag(98, 58, 46, 0.7)}${flag(414, 50, 50, 1.4)}
+    ${flags('back')}
     ${backRow}
-    ${flag(212, 92, 64, 0)}${flag(468, 96, 60, 1)}
+    ${flags('front')}
     ${frontRow}
   </svg>`;
 }
 
-const host = $('intro');
-// links from the list page (?lang=) skip the language screen, so they skip the scene too
-if (host && !urlLang) {
-  host.innerHTML = build();
+// links from the list page (?lang=) skip the language screen, so they skip the scenes too
+const hosts = [$('intro'), $('introBottom')].filter(Boolean);
+if (hosts.length && !urlLang) {
+  hosts.forEach((host, i) => { host.innerHTML = build(LAYOUTS[i % LAYOUTS.length]); });
   // each poster placard has two images: the new poster loads into the hidden one, then they crossfade
-  const faces = [...host.querySelectorAll('.intro-card')].map(c => [...c.querySelectorAll('.intro-face')]).filter(f => f.length);
+  const faces = hosts.flatMap(h => [...h.querySelectorAll('.intro-card')].map(c => [...c.querySelectorAll('.intro-face')]).filter(f => f.length));
   fetch('javidnam/people.json', { cache: 'no-cache' })
     .then(r => (r.ok ? r.json() : []))
     .then(people => {
-      if (!people.length) { faces.forEach(([a]) => a.closest('.intro-card').remove()); return; }   // keep the Prince's placard
+      if (!people.length) { faces.forEach(([a]) => a.closest('.intro-card').remove()); return; }   // keep the Prince's placards
+      // one shuffled queue for both scenes, so the same person is not up twice at once
       const order = [...people].sort(() => Math.random() - 0.5);
       let next = 0;
       const show = (pair, person) => {
@@ -115,15 +124,15 @@ if (host && !urlLang) {
       };
       faces.forEach(f => show(f, order[next++ % order.length]));
       if (reduced) return;
-      // every second or so a different placard fades to another person
+      // every second or so a different placard, in either scene, fades to another person
       let last = -1;
       const timer = setInterval(() => {
-        if (host.hidden) return clearInterval(timer);
+        if (hosts[0].hidden) return clearInterval(timer);
         let i;
         do i = Math.floor(Math.random() * faces.length); while (i === last && faces.length > 1);
         last = i;
         show(faces[i], order[next++ % order.length]);
-      }, 1300);
+      }, 900);
     })
     .catch(() => {});
 }
