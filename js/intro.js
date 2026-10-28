@@ -2,7 +2,7 @@
 // the screen holding up the finished posters of Javidnaman, the Prince's portrait in the middle, and Lion and Sun
 // flags. Inline SVG, animated with CSS (css/poster.css, .intro-*). The crowd band is laid out for the width it gets:
 // a phone shows about six posters, a desktop about fifteen. Nothing moves when the visitor asks for reduced motion.
-import { $, urlLang } from './common.js?v=202610281732';
+import { $, urlLang } from './common.js?v=202610281737';
 
 const H = 300, HORIZON = 196;                       // the crowd band is always 300 units high; its width follows the screen
 const NS = 'http://www.w3.org/2000/svg';
@@ -96,27 +96,40 @@ function band(W, flagCount) {
     <rect class="intro-river" y="${HORIZON}" width="${W}" height="${H - HORIZON}"/>
     ${backRow}${frontRow}
   </svg>`;
-  return { svg, hands };
+  const princeTop = 262 - (16 + 90.5) * 1.22 * k;   // top of the Prince's placard, the highest one
+  return { svg, hands, princeTop };
 }
 
-// The flags fly at the top of the screen, above the language card and above everything else; their poles run down
-// behind the card to the bearers' hands in the crowd. In screen pixels. Nothing is drawn over a flag.
+// A Lion and Sun flag in the historic 7:4 proportions, in the colours of the flag in the poster header,
+// the emblem in the white stripe at its own proportions.
+function flagCloth(x, top, w) {
+  const h = w * 4 / 7, band = h / 3, eh = band * 0.94, ew = eh * 1920 / 1387;
+  return `<rect x="${x}" y="${top}" width="${w}" height="${band + 0.5}" fill="#017457"/>
+    <rect x="${x}" y="${top + band}" width="${w}" height="${band + 0.5}" fill="#ffffff"/>
+    <rect x="${x}" y="${top + 2 * band}" width="${w}" height="${band}" fill="#bb2129"/>
+    <image href="intro/emblem.png" x="${x + (w - ew) / 2}" y="${top + band + (band - eh) / 2}" width="${ew}" height="${eh}"/>
+    <rect x="${x}" y="${top}" width="${w}" height="${h}" fill="url(#intro-shade)"/>`;
+}
+
+// The flags fly high in the sky, above the language card and above everything else, with room above them; their
+// poles run down behind the card to the bearers' hands in the crowd. In screen pixels. Nothing is drawn over a flag.
 function sky(vw, vh, hands, toPx, cardTop) {
-  const w = vw < 600 ? 66 : 96, h = w / 1.196;
+  const w = vw < 600 ? 74 : 112, h = w * 4 / 7;
+  // centred in the sky between the top of the screen and the card, a little above the middle, alternately higher
+  const base = Math.max(10, Math.min((cardTop - h) * 0.45, cardTop - h - 22));
   let out = '';
   hands.forEach((hand, i) => {
     const x = hand.x * toPx.x, bottom = toPx.top + hand.y * toPx.y;
     if (x + w > vw - 6) return;                                   // the cloth would leave the screen
-    const top = Math.max(8, Math.min(i % 2 ? 30 : 14, cardTop - h - 12));
-    out += `<rect class="intro-pole" x="${(x - 1.6).toFixed(1)}" y="${top}" width="3.2" height="${(bottom - top).toFixed(1)}"/>
-      <circle class="intro-pole" cx="${x.toFixed(1)}" cy="${top - 3}" r="3.4"/>
+    const top = Math.max(8, Math.min(base + (i % 2 ? 14 : 0), cardTop - h - 14));
+    out += `<rect class="intro-pole" x="${(x - 1.6).toFixed(1)}" y="${(top - 2).toFixed(1)}" width="3.2" height="${(bottom - top + 2).toFixed(1)}"/>
+      <circle class="intro-pole" cx="${x.toFixed(1)}" cy="${(top - 5).toFixed(1)}" r="3.6"/>
       <g class="intro-flag" style="transform-origin:${x.toFixed(1)}px ${(top + h / 2).toFixed(1)}px;animation-delay:${(i * 0.45) % 1.6}s">
-        <image href="intro/flag.jpg" x="${x.toFixed(1)}" y="${top}" width="${w}" height="${h.toFixed(1)}" preserveAspectRatio="none"/>
-        <rect x="${x.toFixed(1)}" y="${top}" width="${w}" height="${h.toFixed(1)}" fill="url(#intro-shade)"/>
+        ${flagCloth(x, top, w)}
       </g>`;
   });
   return `<svg class="intro-sky" viewBox="0 0 ${vw} ${vh}" xmlns="${NS}">
-    <defs><linearGradient id="intro-shade" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#000" stop-opacity=".18"/><stop offset=".45" stop-color="#fff" stop-opacity=".14"/><stop offset="1" stop-color="#000" stop-opacity=".22"/></linearGradient></defs>
+    <defs><linearGradient id="intro-shade" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#000" stop-opacity=".16"/><stop offset=".45" stop-color="#fff" stop-opacity=".12"/><stop offset="1" stop-color="#000" stop-opacity=".2"/></linearGradient></defs>
     ${out}</svg>`;
 }
 
@@ -144,7 +157,13 @@ if (hosts.length && !urlLang) {
     const vw = host.clientWidth, vh = host.clientHeight, W = Math.max(280, Math.round(H * vw / bandH));
     const crowd = band(W, vw < 600 ? 2 : Math.max(3, Math.round(vw / 260)));
     const toPx = { x: vw / W, y: bandH / H, top: vh - bandH };
-    host.innerHTML = stars(vw, Math.max(100, vh - bandH * 0.6)) + crowd.svg + sky(vw, vh, crowd.hands, toPx, $('langScreen').getBoundingClientRect().top);
+    // the language card sits about 2 cm (75 px) above the highest placard, so the flags have sky above it;
+    // on short screens it moves up only as far as the flags still fit above it and the buttons stay on screen
+    const card = $('langScreen'), gap = 75, flagRoom = (vw < 600 ? 74 : 112) * 4 / 7 + 46;
+    const placardTop = toPx.top + crowd.princeTop * toPx.y;
+    const cardTop = Math.round(Math.min(vh - card.offsetHeight - 8, Math.max(flagRoom, placardTop - gap - card.offsetHeight)));
+    card.style.marginTop = Math.max(0, cardTop - 12) + 'px';      // 12 px is the page's own top padding
+    host.innerHTML = stars(vw, Math.max(100, vh - bandH * 0.6)) + crowd.svg + sky(vw, vh, crowd.hands, toPx, card.getBoundingClientRect().top);
     const pairs = sel => hosts.flatMap(h => [...h.querySelectorAll(sel)].map(c => [...c.querySelectorAll('.intro-face')]));
     posters = pairs('.intro-card:not(.intro-prince)');
     princes = pairs('.intro-prince');

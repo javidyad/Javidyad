@@ -1,5 +1,5 @@
 // Javidnam list (javidnam.html): people by province and city, search, and links into the poster maker.
-import { $, el, urlLang, savedLang, translatePage } from './common.js?v=202610281732';
+import { $, el, urlLang, savedLang, translatePage } from './common.js?v=202610281737';
 const STR = {
   en: {
     title: 'Choose a Javidnam', docTitle: 'Choose a Javidnam · JavidYad', back: '← Back',
