@@ -1,4 +1,4 @@
-/* Shared by every page: fonts, palette (light and dark), base layout. No red here: see CLAUDE.md. */
+/* Shared by every page: fonts, palette (light and dark), base layout. No red in the interface. */
 /* Self-hosted fonts (SIL Open Font License, see fonts/). System fonts are used while they load. */
 @font-face { font-family:"Archivo Black"; font-weight:100 900; font-display:swap; src:url(../fonts/ArchivoBlack-Regular.woff2) format("woff2"); }
 @font-face { font-family:Vazirmatn; font-weight:400; font-display:swap; src:url(../fonts/Vazirmatn-Regular.woff2) format("woff2"); }
