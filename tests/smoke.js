@@ -82,10 +82,10 @@ async function main() {
   await p.goto(base + 'index.html');
   check(await p.isVisible('#langScreen') && await p.isHidden('#container'), 'language screen first');
   await p.waitForSelector('#intro svg .intro-face.on', { state: 'attached', timeout: 15000 });   // the scene shows real people
-  check(await p.$$eval('#intro .intro-face', c => c.length) >= 8 && await p.$$eval('#introBottom .intro-face', c => c.length) >= 8, 'both scenes have posters');
+  check(await p.$$eval('#intro .intro-face', c => c.length) >= 8, 'the scene has posters');
   await p.waitForSelector('#intro .intro-prince .intro-face.on', { state: 'attached', timeout: 15000 });   // the Prince's portrait
   await p.click('[data-lang=fa]');
-  check(await p.isHidden('#intro') && await p.isHidden('#introBottom'), 'both scenes go with the language screen');
+  check(await p.isHidden('#intro'), 'the scene goes with the language screen');
   check(await p.getAttribute('html', 'dir') === 'rtl', 'Persian is RTL');
   await p.waitForSelector('#fromList:not([hidden])');
   await allTranslated();

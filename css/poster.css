@@ -3,11 +3,14 @@
 body.lang-pick { min-height:100vh; min-height:100dvh; display:flex; align-items:center; justify-content:center; }
 body.lang-pick .container { width:100%; }
 
-/* language screen scene (js/intro.js): Frankfurt at night, placards of Javidnaman, a Lion and Sun flag */
-body.lang-pick { flex-direction:column; gap:14px; }
-/* full width: on a phone the scene keeps its proportions, on a wide screen it gets wider (more people), not taller */
-.intro { width:100%; aspect-ratio:560/300; max-height:min(300px, 30vh); border-radius:12px; overflow:hidden; background:#071931; box-shadow:0 2px 14px rgba(0,0,0,.18); }
-.intro svg { display:block; width:100%; height:100%; }
+/* language screen background (js/intro.js): Frankfurt at night over the whole screen, the crowd along the bottom,
+   the language card floating above it */
+body.lang-pick { flex-direction:column; justify-content:flex-start; }
+body.lang-pick #langScreen { position:relative; z-index:1; margin-top:clamp(16px, 7vh, 80px); box-shadow:0 10px 40px rgba(0,0,0,.45); }
+body.lang-pick .emblem { width:104px; }
+.intro { position:fixed; inset:0; z-index:0; overflow:hidden; background:linear-gradient(#0d2550, #071931 70%); }
+.intro-stars { position:absolute; inset:0 0 auto 0; width:100%; height:auto; }
+.intro-band { position:absolute; left:0; right:0; bottom:0; width:100%; height:var(--band, 45vh); }
 .intro-city { fill:#0a1c38; }
 .intro-win { fill:#fec96b; opacity:.55; }
 .intro-river { fill:#081a36; }
@@ -25,8 +28,8 @@ body.lang-pick { flex-direction:column; gap:14px; }
 @keyframes intro-wave { from { transform:skewY(-4deg) scaleX(1); } to { transform:skewY(3deg) scaleX(.94); } }
 @keyframes intro-twinkle { from { opacity:.25; } to { opacity:.9; } }
 @media (prefers-reduced-motion: reduce) { .intro * { animation:none !important; transition:none !important; } }
-/* short screens (a phone held sideways): the language buttons matter more than the scene */
-@media (max-height:620px) { .intro { display:none; } }
+/* short screens (a phone held sideways): keep the stars and sky, drop the crowd so the buttons stay clear */
+@media (max-height:620px) { .intro-band { display:none; } }
 .container.dragover { outline-color:var(--gold); }
 .emblem { display:block; width:160px; max-width:50%; height:auto; margin:8px auto 4px; }
 .lang-q { text-align:center; line-height:1.9; margin:6px 0 4px; color:var(--muted); }

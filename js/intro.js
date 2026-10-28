@@ -1,10 +1,10 @@
-// Language screen scenes (above and below the language card): Frankfurt at night, a crowd holding up the
-// finished posters of Javidnaman and the Prince's portrait, Lion and Sun flags. Inline SVG, animated with CSS
-// (css/poster.css, .intro-*). The scene is laid out for the width it gets: a phone shows about ten placards,
-// a wide desktop window many more. Nothing moves when the visitor asks for reduced motion.
-import { $, urlLang } from './common.js?v=202610281717';
+// Language screen background: Frankfurt at night behind the language card, with a crowd along the bottom of
+// the screen holding up the finished posters of Javidnaman, the Prince's portrait in the middle, and Lion and Sun
+// flags. Inline SVG, animated with CSS (css/poster.css, .intro-*). The crowd band is laid out for the width it gets:
+// a phone shows about six posters, a desktop about fifteen. Nothing moves when the visitor asks for reduced motion.
+import { $, urlLang } from './common.js?v=202610281726';
 
-const H = 300, HORIZON = 196;                       // the drawing is always 300 units high; its width follows the screen
+const H = 300, HORIZON = 196;                       // the crowd band is always 300 units high; its width follows the screen
 const NS = 'http://www.w3.org/2000/svg';
 const PRINCE = [1, 2, 3, 4].map(i => `intro/prince-${i}.jpg`);
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -37,12 +37,12 @@ function skyline(W) {
   return `<g class="intro-city">${out}</g>`;
 }
 
-function stars(W) {
+function stars(w, h) {
   let out = '';
-  for (let i = 0; i < W / 16; i++) {
-    out += `<circle class="intro-star" cx="${rand(4, W - 4).toFixed(1)}" cy="${rand(4, 120).toFixed(1)}" r="${rand(0.5, 1.3).toFixed(2)}" style="animation-delay:${rand(0, 4).toFixed(2)}s"/>`;
+  for (let i = 0; i < w * h / 9000; i++) {
+    out += `<circle class="intro-star" cx="${rand(2, w - 2).toFixed(1)}" cy="${rand(2, h - 2).toFixed(1)}" r="${rand(0.5, 1.4).toFixed(2)}" style="animation-delay:${rand(0, 4).toFixed(2)}s"/>`;
   }
-  return out;
+  return `<svg class="intro-stars" viewBox="0 0 ${w} ${h}" xmlns="${NS}">${out}</svg>`;
 }
 
 // one person in the crowd, seen from behind; holding a placard above the head when `card` is given.
@@ -71,34 +71,33 @@ function flag(x, top, w, delay) {
   </g>`;
 }
 
-// `variant` 0 or 1 shifts who holds a placard and where the flags stand, so the two scenes differ
-function build(W, variant) {
+function band(W) {
+  // narrow screens (phones) draw everything a little smaller, so whole posters fit
+  const k = W < 500 ? 0.8 : 1, edge = 44 * k;
+  // back row: smaller, every third holds a poster; front row: bigger, every other one, the Prince in the middle
   const back = [], front = [];
-  for (let x = 10; x < W; x += 26) back.push(x);
-  const fn = Math.max(5, Math.round((W - 36) / 54));
-  for (let i = 0; i <= fn; i++) front.push(18 + i * (W - 36) / fn);
-  const mid = front.reduce((best, x, i) => (Math.abs(x - W / 2) < Math.abs(front[best] - W / 2) ? i : best), 0);   // the Prince, in the middle
-  const backRow = back.map((x, i) => person(x, 246 + (i % 2) * 4, 0.6, (i + variant * 2) % 4 === 1 && { delay: (i % 5) * 0.5 })).join('');
+  for (let x = 14; x < W; x += 36 * k) back.push(x);
+  const fn = 2 * Math.max(2, Math.round((W - 2 * edge) / (128 * k)));   // an even number of gaps, so someone stands in the middle
+  for (let i = 0; i <= fn; i++) front.push(edge + i * (W - 2 * edge) / fn);
+  const mid = front.reduce((best, x, i) => (Math.abs(x - W / 2) < Math.abs(front[best] - W / 2) ? i : best), 0);
+  const backRow = back.map((x, i) => person(x, 244 + (i % 2) * 4, 0.74 * k, i % 3 === 1 && { delay: (i % 5) * 0.5 })).join('');
   const frontRow = front.map((x, i) => {
-    const prince = i === mid, card = prince || (i !== mid - 1 && i !== mid + 1 && (i + variant) % 2 === 1);
-    return person(x, 266 + (i % 3) * 3, 0.92, card && { delay: (i % 4) * 0.6 + 0.3, prince });
+    if (i === mid) return person(x, 262, 1.22 * k, { delay: 0.2, prince: true });
+    const card = i !== mid - 1 && i !== mid + 1 && (i - mid) % 2 === 0;
+    return person(x, 266 + (i % 3) * 3, 1.06 * k, card && { delay: (i % 4) * 0.6 + 0.3 });
   }).join('');
-  // flags: about one per 140 units, alternating behind and in front of the back row, kept off the Prince
-  const nf = Math.max(4, Math.round(W / 140)), flagsBack = [], flagsFront = [];
-  for (let k = 0; k < nf; k++) {
-    let x = (k + 0.5 + (variant ? 0.35 : 0)) * W / nf;
-    if (x > W - 66) x -= W / nf / 2;
-    if (Math.abs(x - front[mid]) < 40) x += 70;
-    (k % 2 ? flagsBack : flagsFront).push(k % 2 ? flag(x, 54 + (k * 7) % 12, 46 + (k % 3) * 2, (k * 0.37) % 1.6) : flag(x, 90 + (k * 5) % 8, 60 + (k % 2) * 4, (k * 0.53) % 1.6));
+  // a few big flags, about one per 190 units, spread over the two halves so none covers the Prince or another flag
+  const nf = Math.max(2, Math.round(W / 190)), flagsBack = [], flagsFront = [];
+  for (let f = 0; f < nf; f++) {
+    const left = f % 2 === 0, j = Math.floor(f / 2), n = left ? Math.ceil(nf / 2) : Math.floor(nf / 2);
+    const x = W * (left ? 0.08 + 0.32 * (j + 0.5) / n : 0.56 + 0.32 * (j + 0.5) / n);
+    (j % 2 ? flagsBack : flagsFront).push(j % 2 ? flag(x, 56 + (f * 7) % 12, 56 * k, (f * 0.37) % 1.6) : flag(x, 84 + (f * 5) % 8, 74 * k, (f * 0.53) % 1.6));
   }
-  return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMax slice" xmlns="${NS}">
+  return `<svg class="intro-band" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMax slice" xmlns="${NS}">
     <defs>
-      <linearGradient id="intro-sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0d2550"/><stop offset="1" stop-color="#071931"/></linearGradient>
       <radialGradient id="intro-glow" cx=".5" cy="1" r=".7"><stop offset="0" stop-color="#fec96b" stop-opacity=".22"/><stop offset="1" stop-color="#fec96b" stop-opacity="0"/></radialGradient>
       <linearGradient id="intro-shade" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#000" stop-opacity=".18"/><stop offset=".45" stop-color="#fff" stop-opacity=".14"/><stop offset="1" stop-color="#000" stop-opacity=".22"/></linearGradient>
     </defs>
-    <rect width="${W}" height="${H}" fill="url(#intro-sky)"/>
-    ${stars(W)}
     <rect y="${HORIZON - 120}" width="${W}" height="140" fill="url(#intro-glow)"/>
     ${skyline(W)}
     <rect class="intro-river" y="${HORIZON}" width="${W}" height="${H - HORIZON}"/>
@@ -107,7 +106,7 @@ function build(W, variant) {
 }
 
 // links from the list page (?lang=) skip the language screen, so they skip the scenes too
-const hosts = [$('intro'), $('introBottom')].filter(Boolean);
+const hosts = [$('intro')].filter(Boolean);
 if (hosts.length && !urlLang) {
   let posters = [], princes = [], people = [], next = 0, nextPrince = 0;
   const swap = (pair, src) => {
@@ -122,10 +121,12 @@ if (hosts.length && !urlLang) {
   // (re)draw both scenes for their current width, and fill the placards
   let drawnFor = '';
   const draw = () => {
-    const sizes = hosts.map(h => Math.round(H * h.clientWidth / Math.max(1, h.clientHeight)));
-    if (sizes.join() === drawnFor || hosts[0].hidden) return;
-    drawnFor = sizes.join();
-    hosts.forEach((h, i) => { h.innerHTML = build(Math.max(400, sizes[i]), i % 2); });
+    const host = hosts[0], bandH = Math.round(Math.min(480, Math.max(220, innerHeight * 0.45)));
+    const size = `${host.clientWidth}x${host.clientHeight}x${bandH}`;
+    if (size === drawnFor || host.hidden) return;
+    drawnFor = size;
+    host.style.setProperty('--band', bandH + 'px');
+    host.innerHTML = stars(host.clientWidth, Math.max(100, host.clientHeight - bandH * 0.6)) + band(Math.max(280, Math.round(H * host.clientWidth / bandH)));
     const pairs = sel => hosts.flatMap(h => [...h.querySelectorAll(sel)].map(c => [...c.querySelectorAll('.intro-face')]));
     posters = pairs('.intro-card:not(.intro-prince)');
     princes = pairs('.intro-prince');
@@ -148,8 +149,7 @@ if (hosts.length && !urlLang) {
       if (people.length) posters.forEach(nextPoster);
       else posters.forEach(([a]) => a.closest('.intro-card').remove());
       if (reduced) return;
-      // about every second a different poster placard, in either scene, fades to another person;
-      // the Prince's placards change portrait every few seconds
+      // a calm pace: every 2.4 s one poster fades to another person; the Prince's portrait changes every ~10 s
       let last = -1, tick = 0;
       const timer = setInterval(() => {
         if (hosts[0].hidden) return clearInterval(timer);
@@ -159,7 +159,7 @@ if (hosts.length && !urlLang) {
           last = i;
           nextPoster(posters[i]);
         }
-        if (++tick % 5 === 0) princes.forEach(nextPortrait);
-      }, 900);
+        if (++tick % 4 === 0) princes.forEach(nextPortrait);
+      }, 2400);
     });
 }
