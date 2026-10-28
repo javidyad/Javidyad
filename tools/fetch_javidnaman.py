@@ -9,7 +9,7 @@ width, height) and <out>/photos/<id>.<ext>.
     python tools/fetch_javidnaman.py --out /path/to/scratch/javidnaman --min-side 1000
 
 The English names and cities are then written into javidnam/source.csv by hand
-(see CLAUDE.md), and tools/build_javidnam.py builds the site files from it.
+(names and cities follow the conventions already used in that file), and tools/build_javidnam.py builds the site files from it.
 """
 import argparse
 import csv
