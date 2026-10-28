@@ -72,7 +72,8 @@ async function main() {
     const [d] = await Promise.all([p.waitForEvent('download', { timeout: 60000 }), p.click(btn)]);
     return fs.readFileSync(await d.path());
   };
-  const photoReady = () => p.waitForFunction(() => !document.getElementById('zoomRow').hidden, null, { timeout: 30000 });
+  // null-safe: right after a click that navigates, the old page may still be the one being checked
+  const photoReady = () => p.waitForFunction(() => { const z = document.getElementById('zoomRow'); return z && !z.hidden; }, null, { timeout: 30000 });
   const allTranslated = async () => {
     const empty = await p.$$eval('[data-i18n]', els => els.filter(e => !e.closest('[hidden]') && !e.textContent.trim()).map(e => e.dataset.i18n));
     check(!empty.length, `untranslated: ${empty}`);
@@ -142,6 +143,7 @@ async function main() {
 
   step = 'list to poster';
   await p.click(`.card[href$="p=${encodeURIComponent(someone.id)}"]`);
+  await p.waitForURL(/index\.html\?/);
   await photoReady();
   check(await p.isHidden('#langScreen'), 'language screen skipped');
   check(await p.inputValue('#nameInput') === someone.name, 'name filled');

@@ -2,7 +2,7 @@
 // the screen holding up the finished posters of Javidnaman, the Prince's portrait in the middle, and Lion and Sun
 // flags. Inline SVG, animated with CSS (css/poster.css, .intro-*). The crowd band is laid out for the width it gets:
 // a phone shows about six posters, a desktop about fifteen. Nothing moves when the visitor asks for reduced motion.
-import { $, urlLang } from './common.js?v=202610281726';
+import { $, urlLang } from './common.js?v=202610281732';
 
 const H = 300, HORIZON = 196;                       // the crowd band is always 300 units high; its width follows the screen
 const NS = 'http://www.w3.org/2000/svg';
@@ -45,11 +45,14 @@ function stars(w, h) {
   return `<svg class="intro-stars" viewBox="0 0 ${w} ${h}" xmlns="${NS}">${out}</svg>`;
 }
 
-// one person in the crowd, seen from behind; holding a placard above the head when `card` is given.
-// A placard is a finished poster (javidnam/placards/) or a portrait of the Prince; each has two images, so a new
-// picture loads into the hidden one and then they crossfade.
-function person(x, y, s, card) {
+// one person in the crowd, seen from behind. With `card` they hold a placard above the head: a finished poster
+// (javidnam/placards/) or a portrait of the Prince, with two images so a new picture loads into the hidden one and
+// then they crossfade. With `pole` they hold a flagpole up with both hands (the flag itself is in the sky layer).
+function person(x, y, s, card, pole) {
   const body = `<circle cx="${x}" cy="${y}" r="${12 * s}"/><rect x="${x - 22 * s}" y="${y + 13 * s}" width="${44 * s}" height="${H}" rx="${18 * s}"/>`;
+  if (pole) {
+    return `<g class="intro-crowd"><path class="intro-arm" style="stroke-width:${8 * s}" d="M${x - 17 * s} ${y + 20 * s}L${x - 3 * s} ${y - 20 * s} M${x + 17 * s} ${y + 20 * s}L${x + 3 * s} ${y - 32 * s}"/>${body}</g>`;
+  }
   if (!card) return `<g class="intro-crowd">${body}</g>`;
   const cw = 64 * s, ch = 90.5 * s, cx = x - cw / 2, cy = y - 16 * s - ch;
   const pic = `<image class="intro-face" x="${cx}" y="${cy}" width="${cw}" height="${ch}" preserveAspectRatio="xMidYMid slice"/>`;
@@ -59,19 +62,9 @@ function person(x, y, s, card) {
     </g><g class="intro-crowd">${body}</g>`;
 }
 
-// a Lion and Sun flag (the one in the poster header) on a pole held up from the crowd
-function flag(x, top, w, delay) {
-  const h = w / 1.196;
-  return `<g>
-    <rect class="intro-pole" x="${x - 1.2}" y="${top}" width="2.4" height="${H - top}"/>
-    <g class="intro-flag" style="transform-origin:${x}px ${top + h / 2}px;animation-delay:${delay}s">
-      <image href="intro/flag.jpg" x="${x}" y="${top}" width="${w}" height="${h}" preserveAspectRatio="none"/>
-      <rect x="${x}" y="${top}" width="${w}" height="${h}" fill="url(#intro-shade)"/>
-    </g>
-  </g>`;
-}
-
-function band(W) {
+// The crowd along the bottom of the screen, W units wide and H high. Returns the drawing and where the flag
+// bearers' hands are, so the sky layer can run their poles up to the top of the screen.
+function band(W, flagCount) {
   // narrow screens (phones) draw everything a little smaller, so whole posters fit
   const k = W < 500 ? 0.8 : 1, edge = 44 * k;
   // back row: smaller, every third holds a poster; front row: bigger, every other one, the Prince in the middle
@@ -80,29 +73,51 @@ function band(W) {
   const fn = 2 * Math.max(2, Math.round((W - 2 * edge) / (128 * k)));   // an even number of gaps, so someone stands in the middle
   for (let i = 0; i <= fn; i++) front.push(edge + i * (W - 2 * edge) / fn);
   const mid = front.reduce((best, x, i) => (Math.abs(x - W / 2) < Math.abs(front[best] - W / 2) ? i : best), 0);
+  const hasCard = i => i !== mid && i !== mid - 1 && i !== mid + 1 && (i - mid) % 2 === 0;
+  // flag bearers: front-row people without a placard, spread evenly, one or more on each side of the Prince
+  // (not the rightmost person: a flag flies to the right of its pole and would leave the screen)
+  const free = front.map((x, i) => i).filter(i => i !== mid && i !== fn && !hasCard(i));
+  const bearers = new Set();
+  for (let f = 0; f < Math.min(flagCount, free.length); f++) bearers.add(free[Math.round((f + 0.5) * free.length / Math.min(flagCount, free.length) - 0.5)]);
+  const hands = [];
   const backRow = back.map((x, i) => person(x, 244 + (i % 2) * 4, 0.74 * k, i % 3 === 1 && { delay: (i % 5) * 0.5 })).join('');
   const frontRow = front.map((x, i) => {
     if (i === mid) return person(x, 262, 1.22 * k, { delay: 0.2, prince: true });
-    const card = i !== mid - 1 && i !== mid + 1 && (i - mid) % 2 === 0;
-    return person(x, 266 + (i % 3) * 3, 1.06 * k, card && { delay: (i % 4) * 0.6 + 0.3 });
+    const y = 266 + (i % 3) * 3, s = 1.06 * k;
+    if (bearers.has(i)) { hands.push({ x, y: y - 32 * s }); return person(x, y, s, null, true); }
+    return person(x, y, s, hasCard(i) && { delay: (i % 4) * 0.6 + 0.3 });
   }).join('');
-  // a few big flags, about one per 190 units, spread over the two halves so none covers the Prince or another flag
-  const nf = Math.max(2, Math.round(W / 190)), flagsBack = [], flagsFront = [];
-  for (let f = 0; f < nf; f++) {
-    const left = f % 2 === 0, j = Math.floor(f / 2), n = left ? Math.ceil(nf / 2) : Math.floor(nf / 2);
-    const x = W * (left ? 0.08 + 0.32 * (j + 0.5) / n : 0.56 + 0.32 * (j + 0.5) / n);
-    (j % 2 ? flagsBack : flagsFront).push(j % 2 ? flag(x, 56 + (f * 7) % 12, 56 * k, (f * 0.37) % 1.6) : flag(x, 84 + (f * 5) % 8, 74 * k, (f * 0.53) % 1.6));
-  }
-  return `<svg class="intro-band" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMax slice" xmlns="${NS}">
+  const svg = `<svg class="intro-band" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMax slice" xmlns="${NS}">
     <defs>
       <radialGradient id="intro-glow" cx=".5" cy="1" r=".7"><stop offset="0" stop-color="#fec96b" stop-opacity=".22"/><stop offset="1" stop-color="#fec96b" stop-opacity="0"/></radialGradient>
-      <linearGradient id="intro-shade" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#000" stop-opacity=".18"/><stop offset=".45" stop-color="#fff" stop-opacity=".14"/><stop offset="1" stop-color="#000" stop-opacity=".22"/></linearGradient>
     </defs>
     <rect y="${HORIZON - 120}" width="${W}" height="140" fill="url(#intro-glow)"/>
     ${skyline(W)}
     <rect class="intro-river" y="${HORIZON}" width="${W}" height="${H - HORIZON}"/>
-    ${flagsBack.join('')}${backRow}${flagsFront.join('')}${frontRow}
+    ${backRow}${frontRow}
   </svg>`;
+  return { svg, hands };
+}
+
+// The flags fly at the top of the screen, above the language card and above everything else; their poles run down
+// behind the card to the bearers' hands in the crowd. In screen pixels. Nothing is drawn over a flag.
+function sky(vw, vh, hands, toPx, cardTop) {
+  const w = vw < 600 ? 66 : 96, h = w / 1.196;
+  let out = '';
+  hands.forEach((hand, i) => {
+    const x = hand.x * toPx.x, bottom = toPx.top + hand.y * toPx.y;
+    if (x + w > vw - 6) return;                                   // the cloth would leave the screen
+    const top = Math.max(8, Math.min(i % 2 ? 30 : 14, cardTop - h - 12));
+    out += `<rect class="intro-pole" x="${(x - 1.6).toFixed(1)}" y="${top}" width="3.2" height="${(bottom - top).toFixed(1)}"/>
+      <circle class="intro-pole" cx="${x.toFixed(1)}" cy="${top - 3}" r="3.4"/>
+      <g class="intro-flag" style="transform-origin:${x.toFixed(1)}px ${(top + h / 2).toFixed(1)}px;animation-delay:${(i * 0.45) % 1.6}s">
+        <image href="intro/flag.jpg" x="${x.toFixed(1)}" y="${top}" width="${w}" height="${h.toFixed(1)}" preserveAspectRatio="none"/>
+        <rect x="${x.toFixed(1)}" y="${top}" width="${w}" height="${h.toFixed(1)}" fill="url(#intro-shade)"/>
+      </g>`;
+  });
+  return `<svg class="intro-sky" viewBox="0 0 ${vw} ${vh}" xmlns="${NS}">
+    <defs><linearGradient id="intro-shade" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#000" stop-opacity=".18"/><stop offset=".45" stop-color="#fff" stop-opacity=".14"/><stop offset="1" stop-color="#000" stop-opacity=".22"/></linearGradient></defs>
+    ${out}</svg>`;
 }
 
 // links from the list page (?lang=) skip the language screen, so they skip the scenes too
@@ -126,7 +141,10 @@ if (hosts.length && !urlLang) {
     if (size === drawnFor || host.hidden) return;
     drawnFor = size;
     host.style.setProperty('--band', bandH + 'px');
-    host.innerHTML = stars(host.clientWidth, Math.max(100, host.clientHeight - bandH * 0.6)) + band(Math.max(280, Math.round(H * host.clientWidth / bandH)));
+    const vw = host.clientWidth, vh = host.clientHeight, W = Math.max(280, Math.round(H * vw / bandH));
+    const crowd = band(W, vw < 600 ? 2 : Math.max(3, Math.round(vw / 260)));
+    const toPx = { x: vw / W, y: bandH / H, top: vh - bandH };
+    host.innerHTML = stars(vw, Math.max(100, vh - bandH * 0.6)) + crowd.svg + sky(vw, vh, crowd.hands, toPx, $('langScreen').getBoundingClientRect().top);
     const pairs = sel => hosts.flatMap(h => [...h.querySelectorAll(sel)].map(c => [...c.querySelectorAll('.intro-face')]));
     posters = pairs('.intro-card:not(.intro-prince)');
     princes = pairs('.intro-prince');

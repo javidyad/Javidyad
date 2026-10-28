@@ -6,11 +6,12 @@ body.lang-pick .container { width:100%; }
 /* language screen background (js/intro.js): Frankfurt at night over the whole screen, the crowd along the bottom,
    the language card floating above it */
 body.lang-pick { flex-direction:column; justify-content:flex-start; }
-body.lang-pick #langScreen { position:relative; z-index:1; margin-top:clamp(16px, 7vh, 80px); box-shadow:0 10px 40px rgba(0,0,0,.45); }
+body.lang-pick #langScreen { position:relative; z-index:1; margin-top:clamp(104px, 15vh, 170px); box-shadow:0 10px 40px rgba(0,0,0,.45); }
 body.lang-pick .emblem { width:104px; }
 .intro { position:fixed; inset:0; z-index:0; overflow:hidden; background:linear-gradient(#0d2550, #071931 70%); }
 .intro-stars { position:absolute; inset:0 0 auto 0; width:100%; height:auto; }
 .intro-band { position:absolute; left:0; right:0; bottom:0; width:100%; height:var(--band, 45vh); }
+.intro-sky { position:absolute; inset:0; width:100%; height:100%; }   /* the flags, above the crowd */
 .intro-city { fill:#0a1c38; }
 .intro-win { fill:#fec96b; opacity:.55; }
 .intro-river { fill:#081a36; }
