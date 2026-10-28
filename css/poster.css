@@ -5,7 +5,8 @@ body.lang-pick .container { width:100%; }
 
 /* language screen scene (js/intro.js): Frankfurt at night, placards of Javidnaman, a Lion and Sun flag */
 body.lang-pick { flex-direction:column; gap:14px; }
-.intro { width:100%; max-width:560px; aspect-ratio:560/300; border-radius:12px; overflow:hidden; background:#071931; box-shadow:0 2px 14px rgba(0,0,0,.18); }
+/* full width: on a phone the scene keeps its proportions, on a wide screen it gets wider (more people), not taller */
+.intro { width:100%; aspect-ratio:560/300; max-height:min(300px, 30vh); border-radius:12px; overflow:hidden; background:#071931; box-shadow:0 2px 14px rgba(0,0,0,.18); }
 .intro svg { display:block; width:100%; height:100%; }
 .intro-city { fill:#0a1c38; }
 .intro-win { fill:#fec96b; opacity:.55; }
