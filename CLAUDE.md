@@ -43,7 +43,7 @@ Hosted as static files on GitHub Pages from `main` of `javidyad/Javidyad`, at ht
   - UI language: English or Persian (Persian is RTL, Vazirmatn). Chosen on the first screen, switchable with the header button. Each page's strings live in `STR.en` / `STR.fa` at the top of its module; every key must exist in both.
   - Poster language: English (`Template.jpg`) or German (`Template-de.jpg`). Remembered in `localStorage` key `posterLang`.
 - **Coordinates:** every number in `CONFIG` (photo box, name zone) is in the pixel space of the English `Template.jpg`. Any template is stretched to that size (`design.w/h`), so a new template only needs the same aspect ratio and layout. If `Template.jpg` is ever replaced with a different size, scale `CONFIG` with it.
-- **German text must be checked by a native speaker** before printing. Current copy: `SAGT ES DER WELT` / `IM IRAN GETÖTET` / `BEI DEN LANDESWEITEN PROTESTEN IM JANUAR` / `FRANKFURT • 7. NOVEMBER`.
+- **German text** was checked by a native speaker before launch (October 2026). Any change to it must be checked again. Current copy: `SAGT ES DER WELT` / `IM IRAN GETÖTET` / `BEI DEN LANDESWEITEN PROTESTEN IM JANUAR` / `FRANKFURT • 7. NOVEMBER`.
 - The red German line must stay the same height as the English one (it was once made smaller and the owner rejected it: posters are read from a distance).
 
 ## How the page behaves
@@ -64,7 +64,7 @@ Hosted as static files on GitHub Pages from `main` of `javidyad/Javidyad`, at ht
 - After changing anything in `css/` or `js/`, run `python tools/bump_version.py`. GitHub Pages lets browsers keep files for 10 minutes, and the new `?v=` stops a fresh page from running an older script.
 - Before every pull request, run `node tests/smoke.js` (CI runs it too). When a change adds a feature or a path people use, extend the test.
 - Work on a branch and merge through a pull request; `main` is what the site serves.
-- Test on a real iPhone and Android phone before publishing anything user-facing, including from inside Instagram / Telegram in-app browsers.
+- Test on a real iPhone and Android phone before publishing anything user-facing, including from inside Instagram / Telegram in-app browsers. (Done for the launch on 27 October 2026; the owner also reviewed the list's spellings and turned on Enforce HTTPS.)
 - Freeze changes around 3 November 2026; after that only fixes.
 
 ## Updating the Javidnam list
