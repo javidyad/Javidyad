@@ -46,7 +46,7 @@ function checkData() {
   for (const p of people) {
     check(/^[A-Za-z .'’-]{1,40}$/.test(p.name), `bad poster name ${p.name}`);
     check(!p.city || p.province, `${p.name} has a city but no province`);
-    for (const d of ['photos', 'thumbs']) check(fs.existsSync(path.join(ROOT, `javidnam/${d}/${p.id}.jpg`)), `missing ${d}/${p.id}.jpg`);
+    for (const d of ['photos', 'thumbs', 'placards']) check(fs.existsSync(path.join(ROOT, `javidnam/${d}/${p.id}.jpg`)), `missing ${d}/${p.id}.jpg (placards: node tools/build_placards.js)`);
   }
   return people;
 }
@@ -82,7 +82,8 @@ async function main() {
   await p.goto(base + 'index.html');
   check(await p.isVisible('#langScreen') && await p.isHidden('#container'), 'language screen first');
   await p.waitForSelector('#intro svg .intro-face.on', { state: 'attached', timeout: 15000 });   // the scene shows real people
-  check(await p.$$eval('#intro .intro-card', c => c.length) === 4, 'scene has four placards');
+  check(await p.$$eval('#intro .intro-face', c => c.length) >= 8, 'scene has the posters');
+  check(await p.$$eval('#intro image', i => i.some(x => x.getAttribute('href') === 'intro/prince.jpg')), 'scene has the Prince');
   await p.click('[data-lang=fa]');
   check(await p.isHidden('#intro'), 'scene goes with the language screen');
   check(await p.getAttribute('html', 'dir') === 'rtl', 'Persian is RTL');

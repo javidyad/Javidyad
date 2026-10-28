@@ -1,7 +1,7 @@
 // Language screen scene: Frankfurt at night, a crowd holding up placards of Javidnaman, a Lion and Sun flag.
 // Drawn as inline SVG, animated with CSS (css/poster.css, .intro-*). The placards show real people from
 // javidnam/people.json and change every few seconds. Nothing moves when the visitor asks for reduced motion.
-import { $, urlLang } from './common.js?v=202610281641';
+import { $, urlLang } from './common.js?v=202610281656';
 
 const W = 560, H = 300, HORIZON = 196;
 const NS = 'http://www.w3.org/2000/svg';
@@ -39,48 +39,58 @@ function stars() {
   return out;
 }
 
-// one person in the crowd, seen from behind; holding a placard above the head when `card` is given
+// one person in the crowd, seen from behind; holding a placard above the head when `card` is given.
+// A placard is the finished poster (javidnam/placards/), or the Prince's photo on a plain board.
 function person(x, y, s, card) {
   const body = `<circle cx="${x}" cy="${y}" r="${12 * s}"/><rect x="${x - 22 * s}" y="${y + 13 * s}" width="${44 * s}" height="${H}" rx="${18 * s}"/>`;
   if (!card) return `<g class="intro-crowd">${body}</g>`;
-  const cw = 78 * s, ch = 102 * s, cx = x - cw / 2, cy = y - 18 * s - ch;
+  const cw = 64 * s, ch = 90.5 * s, cx = x - cw / 2, cy = y - 16 * s - ch;
+  const inner = card.prince
+    ? `<rect class="intro-board" x="${cx}" y="${cy}" width="${cw}" height="${ch}" rx="1.5"/>
+       <image href="intro/prince.jpg" x="${cx + 3 * s}" y="${cy + 3 * s}" width="${cw - 6 * s}" height="${ch - 6 * s}" preserveAspectRatio="xMidYMin slice"/>`
+    : `<rect class="intro-board" x="${cx}" y="${cy}" width="${cw}" height="${ch}" rx="1.5"/>
+       <image class="intro-face" x="${cx}" y="${cy}" width="${cw}" height="${ch}" preserveAspectRatio="xMidYMid slice"/>
+       <image class="intro-face" x="${cx}" y="${cy}" width="${cw}" height="${ch}" preserveAspectRatio="xMidYMid slice"/>`;   // two, to crossfade
   return `<g class="intro-card" style="animation-delay:${card.delay}s">
-      <path class="intro-arm" style="stroke-width:${8 * s}" d="M${x - 17 * s} ${y + 20 * s}L${cx + 10 * s} ${cy + ch - 4 * s} M${x + 17 * s} ${y + 20 * s}L${cx + cw - 10 * s} ${cy + ch - 4 * s}"/>
-      <rect class="intro-board" x="${cx}" y="${cy}" width="${cw}" height="${ch}" rx="2"/>
-      <image class="intro-face" x="${cx + 5 * s}" y="${cy + 5 * s}" width="${cw - 10 * s}" height="${ch - 10 * s}" preserveAspectRatio="xMidYMid slice"/>
+      <path class="intro-arm" style="stroke-width:${8 * s}" d="M${x - 17 * s} ${y + 20 * s}L${cx + 9 * s} ${cy + ch - 3 * s} M${x + 17 * s} ${y + 20 * s}L${cx + cw - 9 * s} ${cy + ch - 3 * s}"/>
+      ${inner}
     </g><g class="intro-crowd">${body}</g>`;
 }
 
-function flag(x, y) {
-  // pole held up from the crowd; the cloth waves around the pole
-  return `<g class="intro-flag-group">
-    <rect class="intro-pole" x="${x - 1.5}" y="${y}" width="3" height="${H - y}"/>
-    <g class="intro-flag" style="transform-origin:${x}px ${y + 30}px">
-      <rect x="${x}" y="${y}" width="96" height="20" fill="#239f40"/>
-      <rect x="${x}" y="${y + 20}" width="96" height="20" fill="#ffffff"/>
-      <rect x="${x}" y="${y + 40}" width="96" height="20" fill="#da0000"/>
-      <image href="Lion_and_Sun.png" x="${x + 34}" y="${y + 21}" width="28" height="18" preserveAspectRatio="xMidYMid meet"/>
-      <rect x="${x}" y="${y}" width="96" height="60" fill="url(#intro-shade)"/>
+// a Lion and Sun flag (the one in the poster header) on a pole held up from the crowd
+function flag(x, top, w, delay) {
+  const h = w / 1.196;
+  return `<g>
+    <rect class="intro-pole" x="${x - 1.2}" y="${top}" width="2.4" height="${H - top}"/>
+    <g class="intro-flag" style="transform-origin:${x}px ${top + h / 2}px;animation-delay:${delay}s">
+      <image href="intro/flag.jpg" x="${x}" y="${top}" width="${w}" height="${h}" preserveAspectRatio="none"/>
+      <rect x="${x}" y="${top}" width="${w}" height="${h}" fill="url(#intro-shade)"/>
     </g>
   </g>`;
 }
 
 function build() {
-  const cards = [[72, 258, 1, 0], [200, 266, 0.9, 0.9], [398, 260, 1, 0.4], [508, 268, 0.88, 1.3]];
-  const back = [14, 40, 112, 138, 160, 246, 272, 300, 334, 356, 444, 470, 548].map(x => person(x, 270, 0.72)).join('');
-  const front = cards.map(([x, y, s, delay]) => person(x, y, s, { delay })).join('');
+  // back row: small, dense; front row: bigger. [x, placard?] with the Prince in the middle of the front row
+  const back = [10, 36, 60, 86, 112, 138, 162, 188, 214, 240, 266, 292, 318, 344, 370, 396, 422, 448, 474, 500, 526, 552];
+  const backCards = new Set([36, 138, 240, 344, 448, 526]);
+  const front = [[18], [74, 1], [128], [184, 1], [240], [286, 'prince'], [340], [392, 1], [446], [500, 1], [552]];
+  const backRow = back.map((x, i) => person(x, 246 + (i % 2) * 4, 0.6, backCards.has(x) && { delay: (i % 5) * 0.5 })).join('');
+  const frontRow = front.map(([x, c], i) => person(x, 266 + (i % 3) * 3, 0.92, c && { delay: (i % 4) * 0.6 + 0.3, prince: c === 'prince' })).join('');
   return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMax slice" xmlns="${NS}">
     <defs>
       <linearGradient id="intro-sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0d2550"/><stop offset="1" stop-color="#071931"/></linearGradient>
       <radialGradient id="intro-glow" cx=".5" cy="1" r=".7"><stop offset="0" stop-color="#fec96b" stop-opacity=".22"/><stop offset="1" stop-color="#fec96b" stop-opacity="0"/></radialGradient>
-      <linearGradient id="intro-shade" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#000" stop-opacity=".15"/><stop offset=".5" stop-color="#fff" stop-opacity=".12"/><stop offset="1" stop-color="#000" stop-opacity=".2"/></linearGradient>
+      <linearGradient id="intro-shade" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#000" stop-opacity=".18"/><stop offset=".45" stop-color="#fff" stop-opacity=".14"/><stop offset="1" stop-color="#000" stop-opacity=".22"/></linearGradient>
     </defs>
     <rect width="${W}" height="${H}" fill="url(#intro-sky)"/>
     ${stars()}
     <rect y="${HORIZON - 120}" width="${W}" height="140" fill="url(#intro-glow)"/>
     ${skyline()}
     <rect class="intro-river" y="${HORIZON}" width="${W}" height="${H - HORIZON}"/>
-    ${back}${flag(300, 74)}${front}
+    ${flag(98, 58, 46, 0.7)}${flag(414, 50, 50, 1.4)}
+    ${backRow}
+    ${flag(212, 92, 64, 0)}${flag(468, 96, 60, 1)}
+    ${frontRow}
   </svg>`;
 }
 
@@ -88,29 +98,32 @@ const host = $('intro');
 // links from the list page (?lang=) skip the language screen, so they skip the scene too
 if (host && !urlLang) {
   host.innerHTML = build();
-  const faces = [...host.querySelectorAll('.intro-face')];
+  // each poster placard has two images: the new poster loads into the hidden one, then they crossfade
+  const faces = [...host.querySelectorAll('.intro-card')].map(c => [...c.querySelectorAll('.intro-face')]).filter(f => f.length);
   fetch('javidnam/people.json', { cache: 'no-cache' })
     .then(r => (r.ok ? r.json() : []))
     .then(people => {
-      if (!people.length) { host.querySelectorAll('.intro-card').forEach(c => c.remove()); return; }
+      if (!people.length) { faces.forEach(([a]) => a.closest('.intro-card').remove()); return; }   // keep the Prince's placard
       const order = [...people].sort(() => Math.random() - 0.5);
       let next = 0;
-      const show = (face, person) => {
-        const src = `javidnam/thumbs/${encodeURIComponent(person.id)}.jpg`;
+      const show = (pair, person) => {
+        const src = `javidnam/placards/${encodeURIComponent(person.id)}.jpg`;
+        const [shown, spare] = pair[0].classList.contains('on') ? pair : [pair[1], pair[0]];
         const img = new Image();
-        img.onload = () => { face.setAttribute('href', src); face.classList.add('on'); };
+        img.onload = () => { spare.setAttribute('href', src); spare.classList.add('on'); shown.classList.remove('on'); };
         img.src = src;
       };
       faces.forEach(f => show(f, order[next++ % order.length]));
       if (reduced) return;
-      // every few seconds one placard fades to another person, round the crowd
-      let turn = 0;
+      // every second or so a different placard fades to another person
+      let last = -1;
       const timer = setInterval(() => {
         if (host.hidden) return clearInterval(timer);
-        const face = faces[turn++ % faces.length];
-        face.classList.remove('on');
-        setTimeout(() => show(face, order[next++ % order.length]), 600);
-      }, 2600);
+        let i;
+        do i = Math.floor(Math.random() * faces.length); while (i === last && faces.length > 1);
+        last = i;
+        show(faces[i], order[next++ % order.length]);
+      }, 1300);
     })
     .catch(() => {});
 }
