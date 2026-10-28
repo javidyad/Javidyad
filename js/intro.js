@@ -2,7 +2,7 @@
 // the screen holding up the finished posters of Javidnaman, the Prince's portrait in the middle, and Lion and Sun
 // flags. Inline SVG, animated with CSS (css/poster.css, .intro-*). The crowd band is laid out for the width it gets:
 // a phone shows about six posters, a desktop about fifteen. Nothing moves when the visitor asks for reduced motion.
-import { $, urlLang } from './common.js?v=202610281737';
+import { $, urlLang } from './common.js?v=202610281742';
 
 const H = 300, HORIZON = 196;                       // the crowd band is always 300 units high; its width follows the screen
 const NS = 'http://www.w3.org/2000/svg';
@@ -157,11 +157,13 @@ if (hosts.length && !urlLang) {
     const vw = host.clientWidth, vh = host.clientHeight, W = Math.max(280, Math.round(H * vw / bandH));
     const crowd = band(W, vw < 600 ? 2 : Math.max(3, Math.round(vw / 260)));
     const toPx = { x: vw / W, y: bandH / H, top: vh - bandH };
-    // the language card sits about 2 cm (75 px) above the highest placard, so the flags have sky above it;
+    // on a phone the language card sits about 2 cm (75 px) above the highest placard, so the flags have sky above it;
     // on short screens it moves up only as far as the flags still fit above it and the buttons stay on screen
     const card = $('langScreen'), gap = 75, flagRoom = (vw < 600 ? 74 : 112) * 4 / 7 + 46;
     const placardTop = toPx.top + crowd.princeTop * toPx.y;
-    const cardTop = Math.round(Math.min(vh - card.offsetHeight - 8, Math.max(flagRoom, placardTop - gap - card.offsetHeight)));
+    // on a desktop the sky is tall, so the card sits a little above the middle of the sky over the posters instead
+    const wanted = vw >= 900 ? (placardTop - card.offsetHeight) * 0.56 : placardTop - gap - card.offsetHeight;
+    const cardTop = Math.round(Math.min(vh - card.offsetHeight - 8, Math.max(flagRoom, Math.min(wanted, placardTop - gap - card.offsetHeight))));
     card.style.marginTop = Math.max(0, cardTop - 12) + 'px';      // 12 px is the page's own top padding
     host.innerHTML = stars(vw, Math.max(100, vh - bandH * 0.6)) + crowd.svg + sky(vw, vh, crowd.hands, toPx, card.getBoundingClientRect().top);
     const pairs = sel => hosts.flatMap(h => [...h.querySelectorAll(sel)].map(c => [...c.querySelectorAll('.intro-face')]));
