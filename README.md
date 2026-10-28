@@ -9,6 +9,7 @@ Live at https://javidyad.com. A free tool to make a printable memorial poster fo
 - `js/common.js`, `css/base.css`: shared by both pages
 - `tools/`: scripts to build the list and the German template
 - `tests/smoke.js`: end-to-end test, also run by GitHub Actions on every pull request
+- Staging: new features are tried at https://javidyad.github.io/javidyad-staging/ first (`tools/stage.py`)
 
 No build step. To try it locally: `python -m http.server`, then open http://localhost:8000.
 
