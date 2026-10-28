@@ -81,7 +81,10 @@ async function main() {
   step = 'poster maker: language screen';
   await p.goto(base + 'index.html');
   check(await p.isVisible('#langScreen') && await p.isHidden('#container'), 'language screen first');
+  await p.waitForSelector('#intro svg .intro-face.on', { state: 'attached', timeout: 15000 });   // the scene shows real people
+  check(await p.$$eval('#intro .intro-card', c => c.length) === 4, 'scene has four placards');
   await p.click('[data-lang=fa]');
+  check(await p.isHidden('#intro'), 'scene goes with the language screen');
   check(await p.getAttribute('html', 'dir') === 'rtl', 'Persian is RTL');
   await p.waitForSelector('#fromList:not([hidden])');
   await allTranslated();
