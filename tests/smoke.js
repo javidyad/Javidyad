@@ -46,7 +46,8 @@ function checkData() {
   for (const p of people) {
     check(/^[A-Za-z .'’-]{1,40}$/.test(p.name), `bad poster name ${p.name}`);
     check(!p.city || p.province, `${p.name} has a city but no province`);
-    for (const d of ['photos', 'thumbs']) check(fs.existsSync(path.join(ROOT, `javidnam/${d}/${p.id}.jpg`)), `missing ${d}/${p.id}.jpg`);
+    check([0, 1, 2, 3].includes(p.q), `${p.name} has no print quality (q): run tools/build_javidnam.py`);
+    for (const d of ['photos', 'thumbs']) check(fs.existsSync(path.join(ROOT, `javidnam/${d}/${p.id}.jpg`)), `missing ${d}/${p.id}.jpg: run tools/build_javidnam.py`);
   }
   return people;
 }
@@ -72,7 +73,8 @@ async function main() {
     const [d] = await Promise.all([p.waitForEvent('download', { timeout: 60000 }), p.click(btn)]);
     return fs.readFileSync(await d.path());
   };
-  const photoReady = () => p.waitForFunction(() => !document.getElementById('zoomRow').hidden, null, { timeout: 30000 });
+  // null-safe: right after a click that navigates, the old page may still be the one being checked
+  const photoReady = () => p.waitForFunction(() => { const z = document.getElementById('zoomRow'); return z && !z.hidden; }, null, { timeout: 30000 });
   const allTranslated = async () => {
     const empty = await p.$$eval('[data-i18n]', els => els.filter(e => !e.closest('[hidden]') && !e.textContent.trim()).map(e => e.dataset.i18n));
     check(!empty.length, `untranslated: ${empty}`);
@@ -113,35 +115,44 @@ async function main() {
   await p.click('#fromList');
   await p.waitForSelector('.card');
   check(p.url().includes('javidnam.html?lang=en'), 'list keeps the language');
-  check(await p.$$eval('.card', c => c.length) === people.length, 'one card per person');
+  const PAGE = 60, cards = () => p.$$eval('.card', c => c.length);
+  check(await cards() === Math.min(PAGE, people.length), 'the first page of cards');
+  check(await p.$$eval('.card .q', c => c.length) === await cards(), 'every card shows its print quality');
+  if (people.length > PAGE) {
+    await p.click('#moreBtn');
+    check(await cards() === Math.min(3 * PAGE, people.length), 'show more adds cards');
+  }
   await allTranslated();
-  check((await p.textContent('#about')).includes(String(people.length)), 'note shows the count');
-  const lastGroup = await p.$eval('.group:last-of-type h3', h => h.textContent);
-  check(!people.some(x => !x.province) || lastGroup.startsWith('Place not recorded'), 'unknown place last');
+  check((await p.textContent('#about')).includes(people.length.toLocaleString('en')), 'note shows the count');
+  const lastProv = await p.$eval('#provSelect option:last-child', o => o.textContent);
+  check(!people.some(x => !x.province) || lastProv.startsWith('Place not recorded'), 'unknown place last');
   const prov = people.find(x => x.province).province;
   await p.selectOption('#provSelect', prov);
-  check(await p.$$eval('.card', c => c.length) === people.filter(x => x.province === prov).length, 'province filter');
+  check(await cards() === Math.min(PAGE, people.filter(x => x.province === prov).length), 'province filter');
   const city = people.find(x => x.province === prov && x.city).city;
   await p.click(`.chip:has-text("${city}")`);
-  check(await p.$$eval('.card', c => c.length) === people.filter(x => x.city === city).length, 'city filter');
+  check(await cards() === Math.min(PAGE, people.filter(x => x.city === city).length), 'city filter');
   await p.click('.chip.up');
   check(await p.inputValue('#provSelect') === '', 'back to all provinces');
-  const someone = people[Math.floor(people.length / 2)];
-  await p.fill('#search', someone.name.split(' ').pop());
+  const someone = people.filter(x => x.q < 2)[0];   // a low-quality photo: the poster maker suggests A4
+  await p.fill('#search', someone.name.toLowerCase());
   check(await p.$$eval('.card .name', (c, n) => c.some(x => x.textContent === n), someone.name), 'English search');
   await p.click('#langBtn');
-  await p.fill('#search', someone.name_fa.split(' ')[0]);
+  await p.fill('#search', someone.name_fa);
   check(await p.$$eval('.card .name', (c, n) => c.some(x => x.textContent === n), someone.name_fa), 'Persian search');
   await p.fill('#search', 'zzzz');
   check(await p.isVisible('#status'), 'no-match message');
   await p.fill('#search', '');
 
   step = 'list to poster';
+  await p.fill('#search', someone.name);         // with thousands of people, only the first page is drawn
   await p.click(`.card[href$="p=${encodeURIComponent(someone.id)}"]`);
+  await p.waitForURL(/index\.html\?/);
   await photoReady();
   check(await p.isHidden('#langScreen'), 'language screen skipped');
   check(await p.inputValue('#nameInput') === someone.name, 'name filled');
   check((await p.textContent('#chosenText')).includes(someone.name_fa), 'banner names the person');
+  check(await p.isVisible('#listQuality') && await p.inputValue('#paperSize') === 'a4', 'low-quality photo: note and A4');
   const jpg2 = await download('#jpgBtn');
   check(jpg2.length > 300000, 'JPG export from a list photo');
   await p.click('#resetBtn');

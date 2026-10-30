@@ -3,10 +3,10 @@
 Used with the platform's permission. Reads the people list embedded in
 https://javidnaman.iranintl.com/, measures every photo (only the first bytes are
 fetched for that), and downloads the ones whose width and height are both at
-least --min-side px. Writes <out>/candidates.csv (id, name_fa, place, age,
+least --min-side px (default: every photo; tools/build_javidnam.py rates their print quality). Writes <out>/candidates.csv (id, name_fa, place, age,
 width, height) and <out>/photos/<id>.<ext>.
 
-    python tools/fetch_javidnaman.py --out /path/to/scratch/javidnaman --min-side 1000
+    python tools/fetch_javidnaman.py --out /path/to/scratch/javidnaman 
 
 The English names and cities are then written into javidnam/source.csv by hand
 (names and cities follow the conventions already used in that file), and tools/build_javidnam.py builds the site files from it.
@@ -64,7 +64,7 @@ def measure(pid):
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--out", required=True, type=Path)
-    ap.add_argument("--min-side", type=int, default=1000)
+    ap.add_argument("--min-side", type=int, default=0)
     ap.add_argument("--workers", type=int, default=8)
     args = ap.parse_args()
     (args.out / "photos").mkdir(parents=True, exist_ok=True)
