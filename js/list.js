@@ -1,5 +1,5 @@
 // Javidnam list (javidnam.html): people by province and city, search, and links into the poster maker.
-import { $, el, urlLang, savedLang, translatePage } from './common.js?v=202610301533';
+import { $, el, urlLang, savedLang, translatePage } from './common.js?v=202610301550';
 const STR = {
   en: {
     title: 'Choose a Javidnam', docTitle: 'Choose a Javidnam · JavidYad', back: '← Back',
@@ -11,7 +11,7 @@ const STR = {
     about: (n, source, own) => [`The ${n} Javidnaman in this list come from `, source, '. Their photos differ in quality, so each card shows how well the poster will print. If you have a sharper photo of someone, or cannot find them, you can ', own, '.'],
     // print quality of the photo (q in javidnam/people.json)
     q3: 'Prints well', q2: 'Best on A4', q1: 'Low quality', q0: 'Very low quality', qTitle: 'Print quality of the photo',
-    more: n => `Show more (${n} left)`,
+    legend: 'Print quality of each photo:', more: n => `Show more (${n} left)`,
     sourceLink: 'Iran International’s Javidnaman platform', ownLink: 'make a poster with your own photo',
     people: n => n === 1 ? '1 person' : `${n} people`, make: 'Make poster →',
     loading: 'Loading the list…', empty: 'The list is being prepared. You can still make a poster with your own photo.',
@@ -27,7 +27,7 @@ const STR = {
     unknownPlace: 'محل ثبت نشده', unknownCity: 'شهر ثبت نشده',
     about: (n, source, own) => [`${n} جاویدنامی که در این فهرست می‌بینید از `, source, ' برگرفته شده‌اند. کیفیت عکس‌ها یکسان نیست، برای همین روی هر کارت نوشته‌ایم پوسترش چقدر خوب چاپ می‌شود. اگر عکس واضح‌تری از عزیزی دارید یا او را پیدا نکردید، می‌توانید ', own, '.'],
     q3: 'چاپ خوب', q2: 'مناسب A4', q1: 'کیفیت پایین', q0: 'کیفیت خیلی پایین', qTitle: 'کیفیت عکس برای چاپ',
-    more: n => `نمایش بیشتر (${n} نفر دیگر)`,
+    legend: 'کیفیت چاپ هر عکس:', more: n => `نمایش بیشتر (${n} نفر دیگر)`,
     sourceLink: 'پلتفرم جاویدنامان ایران اینترنشنال', ownLink: 'با عکس خودتان پوستر بسازید',
     people: n => `${n.toLocaleString('fa')} نفر`, make: 'ساخت پوستر ←',
     loading: 'در حال بارگذاری فهرست…', empty: 'فهرست در حال آماده شدن است. همچنان می‌توانید با عکس خودتان پوستر بسازید.',
@@ -148,7 +148,8 @@ function renderAbout() {
   if (!ready) return;
   const source = el('a', { href: 'https://javidnaman.iranintl.com/', target: '_blank', rel: 'noopener noreferrer', textContent: t('sourceLink') });
   const own = el('a', { href: `index.html?lang=${lang}`, textContent: t('ownLink') });
-  $('about').replaceChildren(...t('about')(num(people.length), source, own));
+  $('about').replaceChildren(...t('about')(num(people.length), source, own),
+    el('span', { className: 'legend' }, t('legend'), ...[3, 2, 1, 0].map(quality)));
 }
 
 function render() {
