@@ -29,3 +29,16 @@ export function translatePage(l, t) {
   document.querySelectorAll('[data-i18n-ph]').forEach(e => { e.placeholder = t(e.dataset.i18nPh); });
   document.querySelectorAll('[data-i18n-aria]').forEach(e => { e.setAttribute('aria-label', t(e.dataset.i18nAria)); });
 }
+
+// one line about a person from the Javidnam list: age, date of death (Persian calendar in Persian) and city,
+// leaving out what the platform does not have
+const dateFmt = {
+  fa: new Intl.DateTimeFormat('fa-IR-u-ca-persian', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }),
+  en: new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })
+};
+export function personFacts(p, l) {
+  const age = p.age && (l === 'fa' ? `${p.age.toLocaleString('fa')} ساله` : `${p.age} years old`);
+  const died = p.died && dateFmt[l].format(new Date(p.died + 'T00:00:00Z'));
+  const city = l === 'fa' ? p.city_fa : p.city;
+  return [age, died, city].filter(Boolean).join(' · ');
+}

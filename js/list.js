@@ -1,5 +1,5 @@
 // Javidnam list (javidnam.html): people by province and city, search, and links into the poster maker.
-import { $, el, urlLang, savedLang, translatePage } from './common.js?v=202610301624';
+import { $, el, urlLang, savedLang, translatePage, personFacts } from './common.js?v=202610301729';
 const STR = {
   en: {
     title: 'Choose a Javidnam', docTitle: 'Choose a Javidnam · JavidYad', back: '← Back',
@@ -106,6 +106,7 @@ function card(p) {
     el('span', { className: 'info' },
       el('span', { className: 'name', textContent: nameOf(p) }),
       lang === 'fa' ? el('span', { className: 'latin', textContent: p.name }) : null,
+      personFacts(p, lang) ? el('span', { className: 'facts', textContent: personFacts(p, lang) }) : null,
       quality(p.q ?? 3),
       el('span', { className: 'go', textContent: t('make') })));
 }

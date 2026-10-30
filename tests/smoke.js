@@ -140,6 +140,7 @@ async function main() {
   await p.click('#langBtn');
   await p.fill('#search', someone.name_fa);
   check(await p.$$eval('.card .name', (c, n) => c.some(x => x.textContent === n), someone.name_fa), 'Persian search');
+  if (someone.died) check(/۱۴۰۴|۱۴۰۵/.test(await p.$eval('.card .facts', e => e.textContent)), 'card shows the date in the Persian calendar');
   await p.fill('#search', 'zzzz');
   check(await p.isVisible('#status'), 'no-match message');
   await p.fill('#search', '');
@@ -153,6 +154,7 @@ async function main() {
   check(await p.inputValue('#nameInput') === someone.name, 'name filled');
   check((await p.textContent('#chosenText')).includes(someone.name_fa), 'banner names the person');
   check(await p.isVisible('#listQuality') && await p.inputValue('#paperSize') === 'a4', 'low-quality photo: note and A4');
+  if (someone.age) check((await p.textContent('#chosenText .facts')).includes(someone.age.toLocaleString('fa')), 'banner shows the age');
   const jpg2 = await download('#jpgBtn');
   check(jpg2.length > 300000, 'JPG export from a list photo');
   await p.click('#resetBtn');

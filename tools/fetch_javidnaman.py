@@ -42,6 +42,17 @@ def load_people():
     return people
 
 
+def detail(pid):
+    """Age and date of death from the person's memorial page (its RSC payload, about 40 KB)."""
+    try:
+        data, _ = get(f"{SITE}memorial/{pid}", {"RSC": "1"})
+        m = re.search(r'"urlPersonDetail":(\{[^{}]*\})', data.decode("utf-8"))
+        d = json.loads(m.group(1)) if m else {}
+        return pid, d.get("age") or "", d.get("date") or ""
+    except Exception:
+        return pid, None, None
+
+
 def image_size(data):
     p = ImageFile.Parser()
     p.feed(data)
@@ -66,11 +77,21 @@ def main():
     ap.add_argument("--out", required=True, type=Path)
     ap.add_argument("--min-side", type=int, default=0)
     ap.add_argument("--workers", type=int, default=8)
+    ap.add_argument("--details-only", action="store_true")
     args = ap.parse_args()
     (args.out / "photos").mkdir(parents=True, exist_ok=True)
 
     people = {p["_id"]: p for p in load_people() if p.get("hasProfileImage")}
     print(f"{len(people)} people with a photo on the platform")
+    if args.details_only:
+        with ThreadPoolExecutor(args.workers) as ex:
+            rows = list(ex.map(detail, people))
+        print(f"{sum(r[1] is None for r in rows)} memorial pages could not be read")
+        with open(args.out / "details.csv", "w", newline="", encoding="utf-8") as f:
+            w = csv.writer(f)
+            w.writerow(["id", "age", "died"])
+            w.writerows(r for r in rows if r[1] is not None)
+        return
     with ThreadPoolExecutor(args.workers) as ex:
         sizes = list(ex.map(measure, people))
     failed = [pid for pid, size, _ in sizes if not size]

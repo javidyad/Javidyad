@@ -35,6 +35,7 @@ body.fa .from-list .fl-arrow { transform:scaleX(-1); }
 .or::before, .or::after { content:""; flex:1; border-top:1px solid var(--line); }
 .chosen { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px; margin-bottom:12px; padding:10px 12px; border:2px solid var(--gold); border-radius:10px; font-size:15px; }
 .chosen a { color:var(--primary); font-weight:700; font-size:14px; }
+.chosen .facts { display:block; margin-top:2px; font-size:13px; color:var(--muted); }
 .paper label { font-weight:700; font-size:14px; }
 select { padding:8px 12px; border:1px solid var(--line); border-radius:8px; font:inherit; font-size:16px; background:transparent; color:inherit; }
 select option { color:#161616; }

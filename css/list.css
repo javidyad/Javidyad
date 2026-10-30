@@ -62,3 +62,4 @@ body.fa .card .latin { text-align:right; }
 .q3 .bars i.on { background:var(--gold); }
 .about .legend { display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin-top:8px; color:var(--ink); font-weight:700; }
 .more { display:block; width:100%; margin:24px 0 8px; padding:12px; border:2px solid var(--primary); border-radius:8px; background:transparent; color:var(--primary); font-weight:700; font-size:15px; }
+.card .facts { font-size:12px; line-height:1.5; color:var(--muted); }
