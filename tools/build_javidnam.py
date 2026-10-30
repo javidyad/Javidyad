@@ -10,6 +10,7 @@ and these seven columns, in this order. The first row is a header and is skipped
     5. city in English      (leave 5 and 6 both empty when it is not known; a city needs a province)
     6. city in Persian
     7. photo file name (found in --photos, case-insensitive; extension optional)
+    8. optional: "owner-approved" when the owner chose to use a photo smaller than MIN_SIDE for this person
 
 Every problem in the sheet is reported at once, and nothing is written until the
 sheet is clean. The owner's rule: a photo smaller than MIN_SIDE px on either side
@@ -60,7 +61,7 @@ def find_photo(photos, wanted):
 def read_rows(csv_path):
     with open(csv_path, encoding="utf-8-sig", newline="") as f:
         rows = list(csv.reader(f))
-    return [(i, [c.strip() for c in r] + [""] * (7 - len(r))) for i, r in enumerate(rows[1:], start=2) if any(c.strip() for c in r)]
+    return [(i, [c.strip() for c in r] + [""] * (8 - len(r))) for i, r in enumerate(rows[1:], start=2) if any(c.strip() for c in r)]
 
 
 def check_place(where, kind, en, fa, fa_of, errors):
@@ -91,7 +92,7 @@ def main():
     photos = [p for p in args.photos.rglob("*") if p.is_file()]
     errors, warnings, people, taken, seen_names = [], [], [], set(), {}
     province_fa_of, city_fa_of, province_of = {}, {}, {}
-    for line, (name, name_fa, province, province_fa, city, city_fa, photo, *_) in read_rows(args.csv):
+    for line, (name, name_fa, province, province_fa, city, city_fa, photo, approved, *_) in read_rows(args.csv):
         where = f"row {line}"
         if not NAME_RE.match(name):
             errors.append(f"{where}: English name {name!r} must be 1-40 English letters (space . ' ’ - allowed)")
@@ -113,8 +114,10 @@ def main():
         elif src:
             with Image.open(src) as im:
                 w, h = ImageOps.exif_transpose(im).size
-            if min(w, h) < MIN_SIDE:
+            if min(w, h) < MIN_SIDE and approved != "owner-approved":
                 errors.append(f"{where}: photo {src.name} is {w} x {h}; both sides must be at least {MIN_SIDE} px")
+            elif min(w, h) < MIN_SIDE:
+                warnings.append(f"{where}: photo {src.name} is {w} x {h}, used because the owner approved it")
         people.append({"line": line, "name": " ".join(name.split()), "name_fa": name_fa, "province": province, "province_fa": province_fa,
                        "city": city, "city_fa": city_fa, "src": src})
     near_duplicates("provinces", province_fa_of, errors)
