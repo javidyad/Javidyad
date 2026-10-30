@@ -140,6 +140,8 @@ async function main() {
   await p.click('#langBtn');
   await p.fill('#search', someone.name_fa);
   check(await p.$$eval('.card .name', (c, n) => c.some(x => x.textContent === n), someone.name_fa), 'Persian search');
+  await p.fill('#search', someone.name_fa.replace(/\s+/g, ''));   // «محمدامین» finds «محمد امین»
+  check(await p.$$eval('.card .name', (c, n) => c.some(x => x.textContent === n), someone.name_fa), 'search ignores spaces');
   if (someone.died) check(/۱۴۰۴|۱۴۰۵/.test(await p.$eval('.card .facts', e => e.textContent)), 'card shows the date in the Persian calendar');
   await p.fill('#search', 'zzzz');
   check(await p.isVisible('#status'), 'no-match message');

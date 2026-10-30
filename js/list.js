@@ -1,5 +1,5 @@
 // Javidnam list (javidnam.html): people by province and city, search, and links into the poster maker.
-import { $, el, urlLang, savedLang, translatePage, personFacts } from './common.js?v=202610301729';
+import { $, el, urlLang, savedLang, translatePage, personFacts } from './common.js?v=202610301736';
 const STR = {
   en: {
     title: 'Choose a Javidnam', docTitle: 'Choose a Javidnam · JavidYad', back: '← Back',
@@ -44,8 +44,9 @@ let people = null, prov = '', city = '', status = 'loading';
 const PAGE = 60;
 let shown = PAGE;
 
-// Persian and Arabic letter forms, ZWNJ and case are ignored when searching
-const fold = s => s.toLowerCase().replace(/[‌ً-ٟ]/g, '').replace(/[يى]/g, 'ی').replace(/ك/g, 'ک').replace(/\s+/g, ' ').trim();
+// Persian and Arabic letter forms, ZWNJ, spaces and case are ignored when searching,
+// so «محمدامین» finds «محمد امین» and "aliReza" finds "Ali Reza"
+const fold = s => s.toLowerCase().replace(/[‌ً-ٟ]/g, '').replace(/[يى]/g, 'ی').replace(/ك/g, 'ک').replace(/\s+/g, '');
 const nameOf = p => lang === 'fa' ? p.name_fa : p.name;
 const posterURL = p => `index.html?lang=${lang}&p=${encodeURIComponent(p.id)}`;
 

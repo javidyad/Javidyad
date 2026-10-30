@@ -1,5 +1,5 @@
 // Poster maker (index.html): template, photo, name, preview, export, and the Javidnam list hookup.
-import { $, el, params, urlLang, savedLang, translatePage, personFacts } from './common.js?v=202610301729';
+import { $, el, params, urlLang, savedLang, translatePage, personFacts } from './common.js?v=202610301736';
 
 /* ---------- Language ---------- */
 const STR = {
