@@ -10,17 +10,18 @@ and these seven columns, in this order. The first row is a header and is skipped
     5. city in English      (leave 5 and 6 both empty when it is not known; a city needs a province)
     6. city in Persian
     7. photo file name (found in --photos, case-insensitive; extension optional)
-    8. optional: "owner-approved" when the owner chose to use a photo smaller than MIN_SIDE for this person
 
 Every problem in the sheet is reported at once, and nothing is written until the
-sheet is clean. The owner's rule: a photo smaller than MIN_SIDE px on either side
-is not used at all, since it would print blurry. Photos are re-encoded, which also strips EXIF (location, camera).
+sheet is clean. Photos of any size are used (the owner's choice, October 2026): each
+person gets a print quality level from how many photo pixels fill the poster's photo
+box (QUALITY), which the list and the poster maker show. Photos are re-encoded, which
+also strips EXIF (location, camera).
 
     python tools/build_javidnam.py --csv people.csv --photos originals/ --out javidnam/
 
 Writes:
-    javidnam/people.json          [{id, name, name_fa, province, province_fa, city, city_fa}, ...] in sheet order;
-                                  province and city are null when unknown
+    javidnam/people.json          [{id, name, name_fa, province, province_fa, city, city_fa, q}, ...] in sheet order;
+                                  province and city are null when unknown; q is the print quality level
     javidnam/photos/<id>.jpg      long side at most FULL_MAX px, for the poster
     javidnam/thumbs/<id>.jpg      THUMB_W x THUMB_H crop, for the list page
 """
@@ -36,7 +37,15 @@ from PIL import Image, ImageOps
 FULL_MAX = 3200          # the photo box is about 3100 px wide in a 16 MP export
 THUMB_W, THUMB_H = 360, 480
 FOCUS_Y = 0.3            # same framing as CONFIG.focusY in index.html: keep faces in the crop
-MIN_SIDE = 1000          # the owner's quality rule; js/poster.js warns below the same size (CONFIG.minPhotoSide)
+BOX_W, BOX_H = 3866, 3200   # CONFIG.photoBox in js/poster.js; the photo covers it
+# print quality: photo pixels across the photo box (27 cm wide on A3, 19 cm on A4) -> level
+#   3 good: 1000+ (about 95 dpi on A3)   2 fair: 600+ (A4 recommended)   1 low: 350+   0 very low
+QUALITY = ((1000, 3), (600, 2), (350, 1))
+
+
+def quality(w, h):
+    across = min(w, h * BOX_W / BOX_H)
+    return next((q for side, q in QUALITY if across >= side), 0)
 NAME_RE = re.compile(r"^[A-Za-z .'’-]{1,40}$")
 IMAGE_EXT = {".jpg", ".jpeg", ".png", ".webp", ".heic", ".tif", ".tiff", ".bmp"}
 
@@ -61,7 +70,7 @@ def find_photo(photos, wanted):
 def read_rows(csv_path):
     with open(csv_path, encoding="utf-8-sig", newline="") as f:
         rows = list(csv.reader(f))
-    return [(i, [c.strip() for c in r] + [""] * (8 - len(r))) for i, r in enumerate(rows[1:], start=2) if any(c.strip() for c in r)]
+    return [(i, [c.strip() for c in r] + [""] * (7 - len(r))) for i, r in enumerate(rows[1:], start=2) if any(c.strip() for c in r)]
 
 
 def check_place(where, kind, en, fa, fa_of, errors):
@@ -92,7 +101,7 @@ def main():
     photos = [p for p in args.photos.rglob("*") if p.is_file()]
     errors, warnings, people, taken, seen_names = [], [], [], set(), {}
     province_fa_of, city_fa_of, province_of = {}, {}, {}
-    for line, (name, name_fa, province, province_fa, city, city_fa, photo, approved, *_) in read_rows(args.csv):
+    for line, (name, name_fa, province, province_fa, city, city_fa, photo, *_) in read_rows(args.csv):
         where = f"row {line}"
         if not NAME_RE.match(name):
             errors.append(f"{where}: English name {name!r} must be 1-40 English letters (space . ' ’ - allowed)")
@@ -111,13 +120,6 @@ def main():
         src = find_photo(photos, photo) if photo else None
         if photo and not src:
             errors.append(f"{where}: photo {photo!r} not found in {args.photos}")
-        elif src:
-            with Image.open(src) as im:
-                w, h = ImageOps.exif_transpose(im).size
-            if min(w, h) < MIN_SIDE and approved != "owner-approved":
-                errors.append(f"{where}: photo {src.name} is {w} x {h}; both sides must be at least {MIN_SIDE} px")
-            elif min(w, h) < MIN_SIDE:
-                warnings.append(f"{where}: photo {src.name} is {w} x {h}, used because the owner approved it")
         people.append({"line": line, "name": " ".join(name.split()), "name_fa": name_fa, "province": province, "province_fa": province_fa,
                        "city": city, "city_fa": city_fa, "src": src})
     near_duplicates("provinces", province_fa_of, errors)
@@ -142,16 +144,18 @@ def main():
             th = im.resize((w, h), Image.LANCZOS)
             x, y = (w - THUMB_W) // 2, round((h - THUMB_H) * FOCUS_Y)
             th.crop((x, y, x + THUMB_W, y + THUMB_H)).save(args.out / "thumbs" / f"{pid}.jpg", quality=80, optimize=True, progressive=True)
-        out.append({"id": pid, "name": p["name"], "name_fa": p["name_fa"], **{k: p[k] or None for k in ("province", "province_fa", "city", "city_fa")}})
+        out.append({"id": pid, "name": p["name"], "name_fa": p["name_fa"], **{k: p[k] or None for k in ("province", "province_fa", "city", "city_fa")},
+                    "q": quality(im.width, im.height)})
 
     # remove files of people who are no longer in the sheet
     for d in ("photos", "thumbs"):
         for f in (args.out / d).glob("*.jpg"):
             if f.stem not in taken:
                 f.unlink()
-    (args.out / "people.json").write_text(json.dumps(out, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+    (args.out / "people.json").write_text("[\n" + ",\n".join(json.dumps(p, ensure_ascii=False, separators=(",", ":")) for p in out) + "\n]\n", encoding="utf-8")
 
     print(f"{len(out)} people in {len(city_fa_of)} cities and {len(province_fa_of)} provinces written to {args.out}")
+    print("  print quality:", ", ".join(f"level {q}: {sum(p['q'] == q for p in out)}" for q in (3, 2, 1, 0)))
     for w in warnings:
         print("  warning:", w)
 

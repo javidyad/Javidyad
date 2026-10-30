@@ -5,6 +5,7 @@
 //     node tools/build_placards.js          # only people without a placard yet
 //     node tools/build_placards.js --all    # redo every placard (after a template or layout change)
 //
+// Only people whose photo prints well (q 3 in people.json) are held up in the scene.
 // Needs the `playwright` package. Writes javidnam/placards/<id>.jpg and removes placards of people no longer listed.
 const { chromium } = require('playwright');
 const fs = require('fs');
@@ -24,7 +25,7 @@ const server = http.createServer((req, res) => {
 });
 
 (async () => {
-  const people = JSON.parse(fs.readFileSync(path.join(ROOT, 'javidnam/people.json'), 'utf8'));
+  const people = JSON.parse(fs.readFileSync(path.join(ROOT, 'javidnam/people.json'), 'utf8')).filter(p => p.q === 3);
   fs.mkdirSync(OUT, { recursive: true });
   const ids = new Set(people.map(p => p.id));
   for (const f of fs.readdirSync(OUT)) if (!ids.has(f.replace(/\.jpg$/, ''))) fs.unlinkSync(path.join(OUT, f));

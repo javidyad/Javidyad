@@ -48,3 +48,13 @@ body.fa .card .latin { text-align:right; }
 .about { margin:0 0 12px; padding:10px 12px; border-inline-start:3px solid var(--gold); border-radius:6px; background:var(--card); font-size:13px; color:var(--muted); line-height:1.8; }
 .about a { color:var(--primary); font-weight:700; }
 .status { margin:28px 0; text-align:center; color:var(--muted); line-height:1.8; }
+
+/* print quality of the photo: three bars, gold when it prints well, muted below that (never red) */
+.card .q { display:flex; align-items:center; gap:6px; margin-top:4px; font-size:12px; color:var(--muted); }
+.card .q3 { color:var(--primary); font-weight:700; }
+.q .bars { display:inline-flex; align-items:flex-end; gap:2px; }
+.q .bars i { width:4px; border-radius:1px; background:var(--line); }
+.q .bars i:nth-child(1) { height:6px; } .q .bars i:nth-child(2) { height:9px; } .q .bars i:nth-child(3) { height:12px; }
+.q .bars i.on { background:var(--muted); }
+.q3 .bars i.on { background:var(--gold); }
+.more { display:block; width:100%; margin:24px 0 8px; padding:12px; border:2px solid var(--primary); border-radius:8px; background:transparent; color:var(--primary); font-weight:700; font-size:15px; }

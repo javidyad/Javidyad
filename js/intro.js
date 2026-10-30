@@ -2,7 +2,7 @@
 // the screen holding up the finished posters of Javidnaman, the Prince's portrait in the middle, and Lion and Sun
 // flags. Inline SVG, animated with CSS (css/poster.css, .intro-*). The crowd band is laid out for the width it gets:
 // a phone shows about six posters, a desktop about fifteen. Nothing moves when the visitor asks for reduced motion.
-import { $, urlLang } from './common.js?v=202610281742';
+import { $, urlLang } from './common.js?v=202610301533';
 
 const H = 300, HORIZON = 196;                       // the crowd band is always 300 units high; its width follows the screen
 const NS = 'http://www.w3.org/2000/svg';
@@ -183,7 +183,7 @@ if (hosts.length && !urlLang) {
     .catch(() => [])
     .then(list => {
       // one shuffled queue for both scenes, so the same person is not up twice at once
-      people = [...list].sort(() => Math.random() - 0.5);
+      people = list.filter(p => p.q === 3).sort(() => Math.random() - 0.5);   // only photos that print well
       peopleLoaded = true;
       if (people.length) posters.forEach(nextPoster);
       else posters.forEach(([a]) => a.closest('.intro-card').remove());

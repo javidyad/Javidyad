@@ -1,5 +1,5 @@
 // Poster maker (index.html): template, photo, name, preview, export, and the Javidnam list hookup.
-import { $, params, urlLang, savedLang, translatePage } from './common.js?v=202610281742';
+import { $, params, urlLang, savedLang, translatePage } from './common.js?v=202610301533';
 
 /* ---------- Language ---------- */
 const STR = {
@@ -29,6 +29,10 @@ const STR = {
     fromListMain: 'Choose a Javidnam from the list', fromListSub: 'Their photo and name are filled in for you',
     or: 'or use your own photo', chosen: 'From the list:', chosenChange: 'Choose someone else',
     personFail: 'This person’s photo could not be loaded. Check your connection, or choose them again from the list.',
+    // print quality of a list photo (q in javidnam/people.json); 3 needs no note
+    quality2: 'This photo is of medium quality: it prints best on A4, which is selected for you. If you have a sharper photo of them, you can use it instead.',
+    quality1: 'This photo is of low quality: printed, the poster will look soft, so A4 is selected for you. If you have a sharper photo of them, you can use it instead.',
+    quality0: 'This photo is very small: printed, the poster will look blurry. It still looks fine on a phone and on social media. If you have a sharper photo of them, you can use it instead.',
     sourceNote: 'The code of this site is public, so anyone can check that photos never leave the device.',
     sourceLink: 'View the code on GitHub'
   },
@@ -58,6 +62,9 @@ const STR = {
     fromListMain: 'انتخاب از فهرست جاویدنامان', fromListSub: 'عکس و نام به‌طور خودکار پر می‌شوند',
     or: 'یا عکس خودتان را بگذارید', chosen: 'از فهرست:', chosenChange: 'انتخاب نفر دیگر',
     personFail: 'عکس این جاویدنام بارگذاری نشد. اتصال اینترنت را بررسی کنید یا دوباره از فهرست انتخابش کنید.',
+    quality2: 'کیفیت این عکس متوسط است و در اندازه‌ی A4 بهتر چاپ می‌شود؛ A4 برایتان انتخاب شد. اگر عکس واضح‌تری از این عزیز دارید، می‌توانید از آن استفاده کنید.',
+    quality1: 'کیفیت این عکس پایین است و پوستر چاپ‌شده کمی تار دیده می‌شود؛ A4 برایتان انتخاب شد. اگر عکس واضح‌تری از این عزیز دارید، می‌توانید از آن استفاده کنید.',
+    quality0: 'این عکس خیلی کوچک است و پوستر چاپ‌شده تار دیده می‌شود، ولی روی گوشی و در شبکه‌های اجتماعی خوب است. اگر عکس واضح‌تری از این عزیز دارید، می‌توانید از آن استفاده کنید.',
     sourceNote: 'کد این سایت عمومی است تا هر کسی بتواند بررسی کند که عکس‌ها از دستگاه خارج نمی‌شوند.',
     sourceLink: 'دیدن کد در گیت‌هاب'
   }
@@ -210,6 +217,9 @@ function handleFile(file) {
 let hasList = false, chosen = null;
 function renderChosen() {
   $('chosen').hidden = !chosen;
+  const q = chosen ? chosen.q ?? 3 : 3;
+  $('listQuality').hidden = q >= 3;
+  if (q < 3) $('listQuality').textContent = t('quality' + q);
   $('fromList').hidden = $('orLine').hidden = !hasList || !!chosen;
   if (!chosen) return;
   const where = lang === 'fa' ? chosen.city_fa || chosen.province_fa : chosen.city || chosen.province;
@@ -231,6 +241,7 @@ fetch('javidnam/people.json', { cache: 'no-cache' })
     if (p) {
       setChosen(p);
       nameInput.value = p.name;
+      if ((p.q ?? 3) < 3) $('paperSize').value = 'a4';   // a small photo looks sharper on smaller paper
       setImage(`javidnam/photos/${encodeURIComponent(p.id)}.jpg`, false);
     } else renderChosen();
   })

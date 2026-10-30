@@ -1,5 +1,5 @@
 // Javidnam list (javidnam.html): people by province and city, search, and links into the poster maker.
-import { $, el, urlLang, savedLang, translatePage } from './common.js?v=202610281742';
+import { $, el, urlLang, savedLang, translatePage } from './common.js?v=202610301533';
 const STR = {
   en: {
     title: 'Choose a Javidnam', docTitle: 'Choose a Javidnam · JavidYad', back: '← Back',
@@ -8,8 +8,10 @@ const STR = {
     all: 'All', allProvinces: 'All provinces', allCities: 'All cities', up: '← All provinces',
     allOf: n => `All of ${n}`, provinceOf: n => `${n} Province`,
     unknownPlace: 'Place not recorded', unknownCity: 'City not recorded',
-    // why the list is short: only photos sharp enough to print were taken from the platform
-    about: (n, source, own) => [`The ${n} Javidnaman in this list come from `, source, ', chosen because their photos have the minimum quality needed to print a poster. Thousands of other names on the platform are not included here. If you cannot find someone, you can ', own, '.'],
+    about: (n, source, own) => [`The ${n} Javidnaman in this list come from `, source, '. Their photos differ in quality, so each card shows how well the poster will print. If you have a sharper photo of someone, or cannot find them, you can ', own, '.'],
+    // print quality of the photo (q in javidnam/people.json)
+    q3: 'Prints well', q2: 'Best on A4', q1: 'Low quality', q0: 'Very low quality', qTitle: 'Print quality of the photo',
+    more: n => `Show more (${n} left)`,
     sourceLink: 'Iran International’s Javidnaman platform', ownLink: 'make a poster with your own photo',
     people: n => n === 1 ? '1 person' : `${n} people`, make: 'Make poster →',
     loading: 'Loading the list…', empty: 'The list is being prepared. You can still make a poster with your own photo.',
@@ -23,7 +25,9 @@ const STR = {
     all: 'همه', allProvinces: 'همه‌ی استان‌ها', allCities: 'همه‌ی شهرها', up: '→ همه‌ی استان‌ها',
     allOf: n => `همه‌ی ${n}`, provinceOf: n => `استان ${n}`,
     unknownPlace: 'محل ثبت نشده', unknownCity: 'شهر ثبت نشده',
-    about: (n, source, own) => [`${n} جاویدنامی که در این فهرست می‌بینید از `, source, ' برگرفته شده‌اند، چون عکسشان حداقل کیفیت لازم برای چاپ پوستر را دارد. هزاران نام دیگر در آن پلتفرم هست که در این فهرست نیامده‌اند. اگر عزیزی را پیدا نکردید، می‌توانید ', own, '.'],
+    about: (n, source, own) => [`${n} جاویدنامی که در این فهرست می‌بینید از `, source, ' برگرفته شده‌اند. کیفیت عکس‌ها یکسان نیست، برای همین روی هر کارت نوشته‌ایم پوسترش چقدر خوب چاپ می‌شود. اگر عکس واضح‌تری از عزیزی دارید یا او را پیدا نکردید، می‌توانید ', own, '.'],
+    q3: 'چاپ خوب', q2: 'مناسب A4', q1: 'کیفیت پایین', q0: 'کیفیت خیلی پایین', qTitle: 'کیفیت عکس برای چاپ',
+    more: n => `نمایش بیشتر (${n} نفر دیگر)`,
     sourceLink: 'پلتفرم جاویدنامان ایران اینترنشنال', ownLink: 'با عکس خودتان پوستر بسازید',
     people: n => `${n.toLocaleString('fa')} نفر`, make: 'ساخت پوستر ←',
     loading: 'در حال بارگذاری فهرست…', empty: 'فهرست در حال آماده شدن است. همچنان می‌توانید با عکس خودتان پوستر بسازید.',
@@ -36,6 +40,9 @@ let lang = urlLang || savedLang();
 const t = k => STR[lang][k];
 
 let people = null, prov = '', city = '', status = 'loading';
+// thousands of people: cards are added PAGE at a time, so the page stays quick on phones
+const PAGE = 60;
+let shown = PAGE;
 
 // Persian and Arabic letter forms, ZWNJ and case are ignored when searching
 const fold = s => s.toLowerCase().replace(/[‌ً-ٟ]/g, '').replace(/[يى]/g, 'ی').replace(/ك/g, 'ک').replace(/\s+/g, ' ').trim();
@@ -61,9 +68,9 @@ function groupBy(list, keyFn, labelFn) {
 const alphabetical = groups => [...groups].sort((a, b) => (a.key === UNKNOWN) - (b.key === UNKNOWN) || a.label.localeCompare(b.label, lang));
 const inProv = () => prov ? people.filter(p => provKey(p) === prov) : people;
 
-function setProv(key) { prov = key; city = ''; renderFilters(); renderResults(); }
+function setProv(key) { prov = key; city = ''; shown = PAGE; renderFilters(); renderResults(); }
 function setCity(key) {
-  city = key;
+  city = key; shown = PAGE;
   if (key && key !== UNKNOWN && !prov) prov = provKey(people.find(p => cityKey(p) === key));   // a city opens its province
   renderFilters(); renderResults();
 }
@@ -99,19 +106,38 @@ function card(p) {
     el('span', { className: 'info' },
       el('span', { className: 'name', textContent: nameOf(p) }),
       lang === 'fa' ? el('span', { className: 'latin', textContent: p.name }) : null,
+      quality(p.q ?? 3),
       el('span', { className: 'go', textContent: t('make') })));
 }
+// three bars and a word: how well this photo prints
+const quality = q => el('span', { className: `q q${q}`, title: t('qTitle') },
+  el('span', { className: 'bars', ariaHidden: 'true' }, ...[1, 2, 3].map(i => el('i', { className: i <= q ? 'on' : '' }))), t('q' + q));
 
 // provinces, each with its cities
 function renderResults() {
   const q = fold($('search').value);
-  const match = inProv().filter(p => (!city || cityKey(p) === city) && (!q || fold(p.name).includes(q) || fold(p.name_fa).includes(q)));
-  const grid = items => el('div', { className: 'grid' }, ...items.map(card));
-  $('results').replaceChildren(...groupBy(match, provKey, provName).map(pg =>
-    el('section', { className: 'group' },
-      el('h3', {}, pg.key === UNKNOWN ? pg.label : t('provinceOf')(pg.label), count(pg.n)),
-      ...(pg.key === UNKNOWN ? [grid(pg.items)]
-        : groupBy(pg.items, cityKey, cityName).map(cg => el('div', {}, el('h4', {}, cg.label, count(cg.n)), grid(cg.items)))))));
+  const match = inProv().filter(p => (!city || cityKey(p) === city) && (!q || p.search.includes(q)))
+    .sort((a, b) => (b.q ?? 3) - (a.q ?? 3));   // stable: within a city, the sharpest photos first
+  // headings count everyone, but only the first `shown` cards are drawn; groups past that are left out
+  let left = shown;
+  const grid = items => { const some = items.slice(0, Math.max(0, left)); left -= some.length; return el('div', { className: 'grid' }, ...some.map(card)); };
+  const sections = [];
+  for (const pg of groupBy(match, provKey, provName)) {
+    if (left <= 0) break;
+    const parts = [];
+    for (const cg of pg.key === UNKNOWN ? [{ items: pg.items }] : groupBy(pg.items, cityKey, cityName)) {
+      if (left <= 0) break;
+      parts.push(cg.label ? el('div', {}, el('h4', {}, cg.label, count(cg.n)), grid(cg.items)) : grid(cg.items));
+    }
+    sections.push(el('section', { className: 'group' }, el('h3', {}, pg.key === UNKNOWN ? pg.label : t('provinceOf')(pg.label), count(pg.n)), ...parts));
+  }
+  const rest = match.length - shown;
+  if (rest > 0) {
+    const more = el('button', { type: 'button', className: 'more', id: 'moreBtn', textContent: t('more')(num(rest)) });
+    more.addEventListener('click', () => { shown += PAGE * 2; renderResults(); });
+    sections.push(more);
+  }
+  $('results').replaceChildren(...sections);
   $('status').hidden = match.length > 0;
   if (!match.length) $('status').textContent = t('noMatch');
 }
@@ -140,12 +166,15 @@ function applyLang(l) {
   if (people) render();
 }
 $('langBtn').addEventListener('click', () => applyLang(lang === 'fa' ? 'en' : 'fa'));
-$('search').addEventListener('input', () => { if (people) renderResults(); });
+$('search').addEventListener('input', () => { if (people) { shown = PAGE; renderResults(); } });
 $('provSelect').addEventListener('change', e => setProv(e.target.value));
 $('citySelect').addEventListener('change', e => setCity(e.target.value));
 applyLang(lang);
 
 fetch('javidnam/people.json', { cache: 'no-cache' })
   .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
-  .then(list => { people = list; status = list.length ? 'ready' : 'empty'; render(); })
+  .then(list => {
+    list.forEach(p => { p.search = fold(p.name + ' ' + p.name_fa); });   // folded once, not on every key press
+    people = list; status = list.length ? 'ready' : 'empty'; render();
+  })
   .catch(() => { people = []; status = 'failed'; render(); });
