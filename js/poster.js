@@ -1,5 +1,5 @@
 // Poster maker (index.html): template, photo, name, preview, export, and the Javidnam list hookup.
-import { $, params, urlLang, savedLang, translatePage } from './common.js?v=202610301624';
+import { $, el, params, urlLang, savedLang, translatePage, personFacts } from './common.js?v=202610301736';
 
 /* ---------- Language ---------- */
 const STR = {
@@ -222,8 +222,10 @@ function renderChosen() {
   if (q < 3) $('listQuality').textContent = t('quality' + q);
   $('fromList').hidden = $('orLine').hidden = !hasList || !!chosen;
   if (!chosen) return;
-  const where = lang === 'fa' ? chosen.city_fa || chosen.province_fa : chosen.city || chosen.province;
-  $('chosenText').textContent = `${t('chosen')} ${lang === 'fa' ? chosen.name_fa : chosen.name}` + (where ? ` (${where})` : '');
+  // name, then age, date of death and city on a second line (the province when the city is not known)
+  const facts = personFacts(chosen, lang) || (lang === 'fa' ? chosen.province_fa : chosen.province);
+  $('chosenText').replaceChildren(`${t('chosen')} ${lang === 'fa' ? chosen.name_fa : chosen.name}`,
+    facts ? el('span', { className: 'facts', textContent: facts }) : '');
 }
 function setChosen(p) {
   chosen = p; renderChosen();

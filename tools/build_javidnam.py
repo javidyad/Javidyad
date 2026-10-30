@@ -1,7 +1,7 @@
 """Build the Javidnam list (javidnam/people.json, photos and thumbnails) from a sheet.
 
 The sheet is a CSV (Google Sheets: File > Download > CSV) with one person per row
-and these seven columns, in this order. The first row is a header and is skipped.
+and these nine columns, in this order. The first row is a header and is skipped.
 
     1. name on the poster, English letters only (A-Z a-z space . ' ’ -), max 40
     2. name in Persian
@@ -10,6 +10,8 @@ and these seven columns, in this order. The first row is a header and is skipped
     5. city in English      (leave 5 and 6 both empty when it is not known; a city needs a province)
     6. city in Persian
     7. photo file name (found in --photos, case-insensitive; extension optional)
+    8. age in years, or empty
+    9. date of death as yyyy-mm-dd (Gregorian), or empty; the pages show it in the Persian calendar too
 
 Every problem in the sheet is reported at once, and nothing is written until the
 sheet is clean. Photos of any size are used (the owner's choice, October 2026): each
@@ -20,8 +22,9 @@ also strips EXIF (location, camera).
     python tools/build_javidnam.py --csv people.csv --photos originals/ --out javidnam/
 
 Writes:
-    javidnam/people.json          [{id, name, name_fa, province, province_fa, city, city_fa, q}, ...] in sheet order;
-                                  province and city are null when unknown; q is the print quality level
+    javidnam/people.json          [{id, name, name_fa, province, province_fa, city, city_fa, q, age?, died?}, ...] in sheet order;
+                                  province and city are null when unknown; q is the print quality level;
+                                  age and died are left out when unknown
     javidnam/photos/<id>.jpg      long side at most FULL_MAX px, for the poster
     javidnam/thumbs/<id>.jpg      THUMB_W x THUMB_H crop, for the list page
 """
@@ -46,6 +49,9 @@ QUALITY = ((1000, 3), (600, 2), (350, 1))
 def quality(w, h):
     across = min(w, h * BOX_W / BOX_H)
     return next((q for side, q in QUALITY if across >= side), 0)
+
+
+DATE_RE = re.compile(r"^20\d\d-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$")
 NAME_RE = re.compile(r"^[A-Za-z .'’-]{1,40}$")
 IMAGE_EXT = {".jpg", ".jpeg", ".png", ".webp", ".heic", ".tif", ".tiff", ".bmp"}
 
@@ -70,7 +76,7 @@ def find_photo(photos, wanted):
 def read_rows(csv_path):
     with open(csv_path, encoding="utf-8-sig", newline="") as f:
         rows = list(csv.reader(f))
-    return [(i, [c.strip() for c in r] + [""] * (7 - len(r))) for i, r in enumerate(rows[1:], start=2) if any(c.strip() for c in r)]
+    return [(i, [c.strip() for c in r] + [""] * (9 - len(r))) for i, r in enumerate(rows[1:], start=2) if any(c.strip() for c in r)]
 
 
 def check_place(where, kind, en, fa, fa_of, errors):
@@ -101,7 +107,7 @@ def main():
     photos = [p for p in args.photos.rglob("*") if p.is_file()]
     errors, warnings, people, taken, seen_names = [], [], [], set(), {}
     province_fa_of, city_fa_of, province_of = {}, {}, {}
-    for line, (name, name_fa, province, province_fa, city, city_fa, photo, *_) in read_rows(args.csv):
+    for line, (name, name_fa, province, province_fa, city, city_fa, photo, age, died, *_) in read_rows(args.csv):
         where = f"row {line}"
         if not NAME_RE.match(name):
             errors.append(f"{where}: English name {name!r} must be 1-40 English letters (space . ' ’ - allowed)")
@@ -110,6 +116,10 @@ def main():
                 errors.append(f"{where}: {label} is empty")
         check_place(where, "province", province, province_fa, province_fa_of, errors)
         check_place(where, "city", city, city_fa, city_fa_of, errors)
+        if age and not (age.isdigit() and 0 < int(age) <= 120):
+            errors.append(f"{where}: age {age!r} must be a whole number of years, or empty")
+        if died and not DATE_RE.match(died):
+            errors.append(f"{where}: date of death {died!r} must be yyyy-mm-dd, or empty")
         if city and not province:
             errors.append(f"{where}: city {city!r} has no province")
         elif city and province_of.setdefault(city, province) != province:
@@ -121,7 +131,7 @@ def main():
         if photo and not src:
             errors.append(f"{where}: photo {photo!r} not found in {args.photos}")
         people.append({"line": line, "name": " ".join(name.split()), "name_fa": name_fa, "province": province, "province_fa": province_fa,
-                       "city": city, "city_fa": city_fa, "src": src})
+                       "city": city, "city_fa": city_fa, "src": src, "age": int(age) if age.isdigit() else None, "died": died})
     near_duplicates("provinces", province_fa_of, errors)
     near_duplicates("cities", city_fa_of, errors)
 
@@ -145,7 +155,7 @@ def main():
             x, y = (w - THUMB_W) // 2, round((h - THUMB_H) * FOCUS_Y)
             th.crop((x, y, x + THUMB_W, y + THUMB_H)).save(args.out / "thumbs" / f"{pid}.jpg", quality=80, optimize=True, progressive=True)
         out.append({"id": pid, "name": p["name"], "name_fa": p["name_fa"], **{k: p[k] or None for k in ("province", "province_fa", "city", "city_fa")},
-                    "q": quality(im.width, im.height)})
+                    "q": quality(im.width, im.height), **{k: p[k] for k in ("age", "died") if p[k]}})
 
     # remove files of people who are no longer in the sheet
     for d in ("photos", "thumbs"):
