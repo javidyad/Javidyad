@@ -1,5 +1,5 @@
 // Poster maker (index.html): template, photo, name, preview, export, and the Javidnam list hookup.
-import { $, params, urlLang, savedLang, translatePage } from './common.js?v=202610301553';
+import { $, params, urlLang, savedLang, translatePage } from './common.js?v=202610301624';
 
 /* ---------- Language ---------- */
 const STR = {
@@ -32,7 +32,7 @@ const STR = {
     // print quality of a list photo (q in javidnam/people.json); 3 needs no note
     quality2: 'This photo is of medium quality: it prints best on A4, which is selected for you. If you have a sharper photo of them, you can use it instead.',
     quality1: 'This photo is of low quality: printed, the poster will look soft, so A4 is selected for you. If you have a sharper photo of them, you can use it instead.',
-    quality0: 'This photo is very small: printed, the poster will look blurry. It still looks fine on a phone and on social media. If you have a sharper photo of them, you can use it instead.',
+    quality0: 'This photo is very small: the poster still prints, with less sharpness, and A4 is selected for you. If you have a sharper photo of them, you can use it instead.',
     sourceNote: 'The code of this site is public, so anyone can check that photos never leave the device.',
     sourceLink: 'View the code on GitHub'
   },
@@ -64,7 +64,7 @@ const STR = {
     personFail: 'عکس این جاویدنام بارگذاری نشد. اتصال اینترنت را بررسی کنید یا دوباره از فهرست انتخابش کنید.',
     quality2: 'کیفیت این عکس متوسط است و در اندازه‌ی A4 بهتر چاپ می‌شود؛ A4 برایتان انتخاب شد. اگر عکس واضح‌تری از این عزیز دارید، می‌توانید از آن استفاده کنید.',
     quality1: 'کیفیت این عکس پایین است و پوستر چاپ‌شده کمی تار دیده می‌شود؛ A4 برایتان انتخاب شد. اگر عکس واضح‌تری از این عزیز دارید، می‌توانید از آن استفاده کنید.',
-    quality0: 'این عکس خیلی کوچک است و پوستر چاپ‌شده تار دیده می‌شود، ولی روی گوشی و در شبکه‌های اجتماعی خوب است. اگر عکس واضح‌تری از این عزیز دارید، می‌توانید از آن استفاده کنید.',
+    quality0: 'این عکس خیلی کوچک است؛ پوستر چاپ می‌شود، با وضوح کمتر، و A4 برایتان انتخاب شد. اگر عکس واضح‌تری از این عزیز دارید، می‌توانید از آن استفاده کنید.',
     sourceNote: 'کد این سایت عمومی است تا هر کسی بتواند بررسی کند که عکس‌ها از دستگاه خارج نمی‌شوند.',
     sourceLink: 'دیدن کد در گیت‌هاب'
   }
