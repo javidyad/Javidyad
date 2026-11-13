@@ -1,0 +1,28 @@
+/* Campaign gallery and posters to print (gallery.html, placards.html). Loaded after base.css. */
+.container { max-width:980px; }
+.top { gap:10px; }
+.back { display:inline-flex; align-items:center; gap:6px; padding:8px 12px; border:2px solid var(--primary); border-radius:8px; color:var(--primary); font-weight:700; font-size:14px; text-decoration:none; }
+button { font:inherit; cursor:pointer; }
+.langbtn { padding:6px 14px; font-size:14px; font-weight:700; border:2px solid var(--primary); border-radius:8px; background:transparent; color:var(--primary); }
+.about { margin:0 auto 16px; max-width:680px; text-align:center; font-size:15px; color:var(--muted); line-height:1.8; }
+
+/* photos keep their own shape: a column layout instead of a grid of equal cells */
+.items { columns:3 260px; column-gap:14px; }
+.item { break-inside:avoid; margin:0 0 14px; border:1px solid var(--line); border-radius:10px; background:var(--card); overflow:hidden; }
+.shot { display:block; width:100%; padding:0; border:0; background:var(--line); }
+.shot img { display:block; width:100%; height:auto; }
+.item figcaption { display:flex; flex-direction:column; gap:4px; padding:8px 10px 10px; font-size:13px; line-height:1.6; }
+.item .name { font-weight:700; font-size:15px; }
+.item .credit { color:var(--muted); font-size:12px; }
+.download { align-self:flex-start; margin-top:4px; padding:7px 14px; border-radius:8px; background:var(--primary); color:var(--on-primary); font-weight:700; font-size:14px; text-decoration:none; }
+.download .n { font-weight:400; font-size:12px; opacity:.85; }
+.more { display:block; width:100%; margin:10px 0; padding:12px; border:2px solid var(--primary); border-radius:8px; background:transparent; color:var(--primary); font-weight:700; font-size:15px; column-span:all; }
+.status { margin:28px 0; text-align:center; color:var(--muted); line-height:1.8; }
+
+.viewer { max-width:min(96vw, 1100px); max-height:96vh; padding:10px; border:0; border-radius:12px; background:var(--paper); color:var(--ink); }
+.viewer::backdrop { background:rgba(10, 14, 26, .85); }
+.viewer img { display:block; max-width:100%; max-height:calc(96vh - 120px); margin:0 auto; border-radius:6px; }
+.viewer p { margin:8px 4px; text-align:center; font-size:14px; color:var(--muted); }
+.viewer-btns { display:flex; justify-content:center; gap:10px; }
+.viewer-btns button { min-width:48px; padding:8px 16px; border:2px solid var(--primary); border-radius:8px; background:transparent; color:var(--primary); font-weight:700; font-size:16px; }
+[dir=rtl] #prevBtn, [dir=rtl] #nextBtn { transform:scaleX(-1); }

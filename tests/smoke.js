@@ -49,6 +49,12 @@ function checkData() {
     check([0, 1, 2, 3].includes(p.q), `${p.name} has no print quality (q): run tools/build_javidnam.py`);
     for (const d of ['photos', 'thumbs']) check(fs.existsSync(path.join(ROOT, `javidnam/${d}/${p.id}.jpg`)), `missing ${d}/${p.id}.jpg: run tools/build_javidnam.py`);
   }
+  for (const kind of ['gallery', 'placards']) {
+    for (const it of JSON.parse(fs.readFileSync(path.join(ROOT, `${kind}/items.json`), 'utf8'))) {
+      const files = kind === 'gallery' ? [`photos/${it.id}.jpg`, `thumbs/${it.id}.jpg`] : [`files/${it.file}`, `previews/${it.id}.jpg`];
+      for (const f of files) check(fs.existsSync(path.join(ROOT, kind, f)), `missing ${kind}/${f}: run tools/build_media.py`);
+    }
+  }
   return people;
 }
 
@@ -186,6 +192,27 @@ async function main() {
   await p.waitForSelector('.card');
   await p.click('#backLink');
   await p.waitForSelector('#container:not([hidden])');
+
+  for (const kind of ['gallery', 'placards']) {
+    step = `${kind} page`;
+    const list = JSON.parse(fs.readFileSync(path.join(ROOT, `${kind}/items.json`), 'utf8'));
+    await p.goto(`${base}index.html?lang=fa`);
+    await p.click('[data-lang=fa]').catch(() => {});
+    await p.waitForTimeout(300);
+    check(await p.isVisible(`#${kind}Link`) === list.length > 0, 'the main page links to it only when it has something');
+    await p.goto(`${base}${kind}.html?lang=en`);
+    if (!list.length) {
+      await p.waitForFunction(() => document.getElementById('status').textContent.includes('soon'));
+      continue;
+    }
+    await p.waitForSelector('.item');
+    check(await p.$$eval('.item', c => c.length) === Math.min(60, list.length), 'one card per item, 60 at a time');
+    await allTranslated();
+    if (kind === 'placards') check(await p.$$eval('.download', c => c.length) === Math.min(60, list.length), 'every design can be downloaded');
+    await p.click('.shot');
+    check(await p.isVisible('#viewer'), 'a card opens the larger view');
+    await p.click('#closeBtn');
+  }
 
   step = 'clean run';
   check(!problems.length, problems.join('\n  '));

@@ -62,3 +62,5 @@ canvas.idle { cursor:default; }
 .modal { position:fixed; inset:0; z-index:10; display:flex; align-items:center; justify-content:center; padding:14px; background:rgba(0,0,0,.75); }
 .sheet { width:100%; max-width:460px; max-height:100%; overflow:auto; padding:14px; border-radius:12px; background:var(--paper); text-align:center; }
 .sheet img { max-width:100%; max-height:58vh; border-radius:6px; -webkit-touch-callout:default; user-select:auto; }
+.more-links { display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:-4px 0 14px; }
+.more-links a { padding:7px 14px; border:1.5px solid var(--gold); border-radius:999px; color:var(--primary); font-weight:700; font-size:14px; text-decoration:none; }

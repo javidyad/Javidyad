@@ -18,8 +18,8 @@
 <meta name="theme-color" content="#1b2a4a">
 <!-- jsPDF 2.5.1, self-hosted so no third-party request is made -->
 <script src="lib/jspdf.umd.min.js"></script>
-<link rel="stylesheet" href="css/base.css?v=202611131131">
-<link rel="stylesheet" href="css/poster.css?v=202611131131">
+<link rel="stylesheet" href="css/base.css?v=202611131139">
+<link rel="stylesheet" href="css/poster.css?v=202611131139">
 </head>
 <body class="lang-pick">
 
@@ -36,6 +36,10 @@
 <div class="container" id="container" hidden>
   <div class="top"><img class="mini" src="Lion_and_Sun.png" alt="" onerror="this.hidden=true"><button id="langBtn" class="langbtn alt" type="button"></button></div>
   <h2><span data-i18n="title"></span><span class="tagline" data-i18n="tagline"></span></h2>
+  <nav class="more-links" id="moreLinks" hidden>
+    <a id="galleryLink" href="gallery.html" data-i18n="galleryLink" hidden></a>
+    <a id="placardsLink" href="placards.html" data-i18n="placardsLink" hidden></a>
+  </nav>
   <div class="warn" id="inApp" data-i18n="inApp" hidden></div>
 
   <div class="paper">
@@ -109,6 +113,6 @@
   </div>
 </div>
 
-<script type="module" src="js/poster.js?v=202611131131"></script>
+<script type="module" src="js/poster.js?v=202611131139"></script>
 </body>
 </html>
