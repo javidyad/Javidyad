@@ -105,6 +105,27 @@ async function main() {
   check(jpg[0] === 0xff && jpg[1] === 0xd8 && jpg.length > 300000, 'JPG export');
   const pdf = await download('#pdfBtn');
   check(pdf.slice(0, 4).toString() === '%PDF', 'PDF export');
+
+  step = 'poster maker: poster languages';
+  const langs = await p.$$eval('#posterLang option', o => o.map(x => x.value));
+  check(langs.length >= 7, 'every poster language is offered');
+  for (const l of langs) {
+    const tpl = `Template-${l}.jpg`;
+    step = `poster maker: poster language ${l}`;
+    if (l === 'en') await p.selectOption('#posterLang', l);       // loaded with the page
+    else {
+      const [r] = await Promise.all([p.waitForResponse(res => res.url().endsWith(tpl)), p.selectOption('#posterLang', l)]);
+      check(r.ok(), `${tpl} loads`);
+    }
+    check(await p.isVisible('#genderRow') === ['fr', 'it', 'es'].includes(l), `${l}: the man/woman choice only where the word changes`);
+  }
+  step = 'poster maker: feminine form';
+  await p.selectOption('#posterLang', 'es');
+  await Promise.all([p.waitForResponse(res => res.url().endsWith('Template-es-f.jpg')), p.selectOption('#posterGender', 'f')]);
+  await p.waitForFunction(() => document.getElementById('errorBox').hidden);
+  check((await download('#jpgBtn')).length > 300000, 'JPG export with the feminine Spanish template');
+  await p.selectOption('#posterGender', 'm');
+  await p.selectOption('#posterLang', 'en');
   await p.click('#langBtn');
   check(await p.getAttribute('html', 'dir') === 'ltr', 'English is LTR');
   await allTranslated();
@@ -173,4 +194,4 @@ async function main() {
   console.log(`smoke test passed (${people.length} people)`);
 }
 
-main().catch(e => { console.error('FAILED', e.message); process.exit(1); });
+main().catch(e => { console.error('FAILED', e.message.startsWith(step) ? e.message : `${step}: ${e.message}`); process.exit(1); });

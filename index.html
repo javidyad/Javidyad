@@ -18,8 +18,8 @@
 <meta name="theme-color" content="#1b2a4a">
 <!-- jsPDF 2.5.1, self-hosted so no third-party request is made -->
 <script src="lib/jspdf.umd.min.js"></script>
-<link rel="stylesheet" href="css/base.css?v=202610301736">
-<link rel="stylesheet" href="css/poster.css?v=202610301736">
+<link rel="stylesheet" href="css/base.css?v=202611131131">
+<link rel="stylesheet" href="css/poster.css?v=202611131131">
 </head>
 <body class="lang-pick">
 
@@ -40,7 +40,15 @@
 
   <div class="paper">
     <label for="posterLang" data-i18n="posterLangLabel"></label>
-    <select id="posterLang"><option value="en">English</option><option value="de">Deutsch</option></select>
+    <select id="posterLang">
+      <option value="en">English</option><option value="de">Deutsch</option><option value="es">Español</option>
+      <option value="fr">Français</option><option value="it">Italiano</option><option value="nl">Nederlands</option>
+      <option value="sv">Svenska</option>
+    </select>
+  </div>
+  <div class="paper" id="genderRow" hidden>
+    <label for="posterGender" data-i18n="genderLabel"></label>
+    <select id="posterGender"><option value="m" data-i18n="genderM"></option><option value="f" data-i18n="genderF"></option></select>
   </div>
 
   <a class="from-list" id="fromList" href="javidnam.html" hidden>
@@ -101,6 +109,6 @@
   </div>
 </div>
 
-<script type="module" src="js/poster.js?v=202610301736"></script>
+<script type="module" src="js/poster.js?v=202611131131"></script>
 </body>
 </html>
